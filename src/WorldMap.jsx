@@ -1,0 +1,144 @@
+import React, { useRef, useEffect } from 'react';
+import { LEVELS, ZONES, PETS } from './gameData';
+import Character from './Character';
+
+export default function WorldMap({ gameState, onSelectLevel, onBack }) {
+  const mapRef = useRef(null);
+  const { completedLevels, character, gems, activePet } = gameState;
+
+  const highestCompleted = Math.max(0, ...Object.keys(completedLevels).map(Number));
+  const currentLevel = Math.min(highestCompleted + 1, 52);
+
+  const unlockedPets = PETS.filter(p => highestCompleted >= p.unlockLevel);
+  const totalStars = Object.values(completedLevels).reduce((sum, l) => sum + (l.stars || 0), 0);
+
+  useEffect(() => {
+    if (mapRef.current) {
+      const currentNode = mapRef.current.querySelector(`.level-node[data-level="${currentLevel}"]`);
+      if (currentNode) {
+        currentNode.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  }, [currentLevel]);
+
+  const getNodePosition = (index) => {
+    const row = Math.floor(index / 4);
+    const col = index % 4;
+    const isEvenRow = row % 2 === 0;
+    const x = isEvenRow ? col : 3 - col;
+    return {
+      left: `${15 + x * 23}%`,
+      top: `${row * 90 + 20}px`,
+    };
+  };
+
+  return (
+    <div className="screen world-map">
+      <div className="map-header">
+        <div className="map-stats">
+          <div className="stat">
+            <span className="stat-icon">⭐</span>
+            <span className="stat-value">{totalStars}</span>
+          </div>
+          <div className="stat">
+            <span className="stat-icon">💎</span>
+            <span className="stat-value">{gems}</span>
+          </div>
+          {activePet && (
+            <div className="stat">
+              <span className="stat-icon">{PETS.find(p => p.id === activePet)?.emoji}</span>
+              <span className="stat-value">{PETS.find(p => p.id === activePet)?.name}</span>
+            </div>
+          )}
+        </div>
+        <div className="map-character-mini">
+          <Character config={character} size={50} />
+          <span className="char-name">{character.name}</span>
+        </div>
+      </div>
+
+      <div className="map-container" ref={mapRef}>
+        {ZONES.map((zone) => {
+          const zoneLevels = LEVELS.filter(l => l.zone === zone.id);
+          return (
+            <div key={zone.id} className="zone-section" style={{ '--zone-color': zone.color, '--zone-bg': zone.bg }}>
+              <div className="zone-banner">
+                <span className="zone-icon">{zone.icon}</span>
+                <div>
+                  <h2 className="zone-name">{zone.name}</h2>
+                  <p className="zone-desc">{zone.description}</p>
+                </div>
+              </div>
+
+              <div className="zone-levels">
+                {zoneLevels.map((level, idx) => {
+                  const isCompleted = !!completedLevels[level.id];
+                  const isUnlocked = level.id <= currentLevel;
+                  const isCurrent = level.id === currentLevel;
+                  const stars = completedLevels[level.id]?.stars || 0;
+                  const pos = getNodePosition(idx);
+                  const petReward = PETS.find(p => p.unlockLevel === level.id);
+
+                  return (
+                    <div
+                      key={level.id}
+                      className={`level-node ${isCompleted ? 'completed' : ''} ${isUnlocked ? 'unlocked' : 'locked'} ${isCurrent ? 'current' : ''}`}
+                      data-level={level.id}
+                      style={pos}
+                      onClick={() => isUnlocked && onSelectLevel(level.id)}
+                    >
+                      <div className="node-circle">
+                        {!isUnlocked ? (
+                          <span className="lock-icon">🔒</span>
+                        ) : (
+                          <>
+                            <span className="level-icon">{level.icon}</span>
+                            <span className="level-num">{level.id}</span>
+                          </>
+                        )}
+                      </div>
+                      {isCompleted && (
+                        <div className="node-stars">
+                          {'⭐'.repeat(stars)}{'☆'.repeat(3 - stars)}
+                        </div>
+                      )}
+                      {isCurrent && !isCompleted && (
+                        <div className="current-indicator">
+                          <Character config={character} size={36} animated />
+                        </div>
+                      )}
+                      <div className="node-label">{level.name}</div>
+                      {petReward && (
+                        <div className="pet-badge" title={`Unlock ${petReward.name}!`}>
+                          {petReward.emoji}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {unlockedPets.length > 0 && (
+        <div className="pets-drawer">
+          <h3>🐾 My Pets</h3>
+          <div className="pets-list">
+            {unlockedPets.map(pet => (
+              <button
+                key={pet.id}
+                className={`pet-btn ${activePet === pet.id ? 'active' : ''}`}
+                onClick={() => onBack('setPet', pet.id)}
+                title={pet.name}
+              >
+                <span className="pet-emoji">{pet.emoji}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
