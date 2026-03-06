@@ -52,9 +52,17 @@ const COINS_SG = [
 function genCounting(min, max) {
   return () => {
     const questions = [];
+    const used = new Set();
     for (let i = 0; i < 12; i++) {
-      const count = rand(min, max);
-      const item = pick(ALL_ITEMS);
+      let count, item, key;
+      let attempts = 0;
+      do {
+        count = rand(min, max);
+        item = pick(ALL_ITEMS);
+        key = `${item.emoji}-${count}`;
+        attempts++;
+      } while (used.has(key) && attempts < 30);
+      used.add(key);
       questions.push({
         type: 'countObjects',
         prompt: `How many ${item.name} are there?`,
@@ -72,8 +80,16 @@ function genCounting(min, max) {
 function genNumberRecognition(min, max) {
   return () => {
     const questions = [];
+    const used = new Set();
     for (let i = 0; i < 12; i++) {
-      const num = rand(min, max);
+      let num, key;
+      let attempts = 0;
+      do {
+        num = rand(min, max);
+        key = `${i % 2}-${num}`;
+        attempts++;
+      } while (used.has(key) && attempts < 30);
+      used.add(key);
       if (i % 2 === 0) {
         questions.push({
           type: 'multipleChoice',
@@ -100,15 +116,23 @@ function genNumberRecognition(min, max) {
 function genComparing(min, max) {
   return () => {
     const questions = [];
+    const used = new Set();
     for (let i = 0; i < 12; i++) {
-      const a = rand(min, max);
-      let b = rand(min, max);
-      if (i < 4) b = a + rand(1, 3);
-      else if (i < 8) b = Math.max(min, a - rand(1, 3));
-      const item = pick(ALL_ITEMS);
+      let a, b, item, key;
+      let attempts = 0;
+      do {
+        a = rand(min, max);
+        b = rand(min, max);
+        if (i < 4) b = a + rand(1, 3);
+        else if (i < 8) b = Math.max(min, a - rand(1, 3));
+        item = pick(ALL_ITEMS);
+        key = `${a}-${Math.min(b, max)}`;
+        attempts++;
+      } while (used.has(key) && attempts < 30);
+      used.add(key);
       questions.push({
         type: 'compare',
-        prompt: `Compare the two groups of ${item.name}!`,
+        prompt: `Does the left group have more, less, or the same number of ${item.name}?`,
         emoji: item.emoji,
         leftCount: a,
         rightCount: Math.min(b, max),
@@ -124,12 +148,20 @@ function genComparing(min, max) {
 function genOrdering(min, max, count = 4) {
   return () => {
     const questions = [];
+    const used = new Set();
     for (let i = 0; i < 12; i++) {
-      const nums = [];
-      while (nums.length < count) {
-        const n = rand(min, max);
-        if (!nums.includes(n)) nums.push(n);
-      }
+      let nums, key;
+      let attempts = 0;
+      do {
+        nums = [];
+        while (nums.length < count) {
+          const n = rand(min, max);
+          if (!nums.includes(n)) nums.push(n);
+        }
+        key = [...nums].sort((a, b) => a - b).join(',');
+        attempts++;
+      } while (used.has(key) && attempts < 30);
+      used.add(key);
       const ascending = i % 2 === 0;
       questions.push({
         type: 'ordering',
@@ -146,9 +178,17 @@ function genOrdering(min, max, count = 4) {
 function genNumberPatterns(min, max) {
   return () => {
     const questions = [];
+    const used = new Set();
     for (let i = 0; i < 12; i++) {
-      const step = pick([1, 2, 3, 5]);
-      const start = rand(min, min + 5);
+      let step, start, key;
+      let attempts = 0;
+      do {
+        step = pick([1, 2, 3, 5]);
+        start = rand(min, min + 5);
+        key = `${start}-${step}`;
+        attempts++;
+      } while (used.has(key) && attempts < 30);
+      used.add(key);
       const seq = [];
       for (let j = 0; j < 5; j++) seq.push(start + j * step);
       if (seq[seq.length - 1] > max) { seq.length = 0; for (let j = 0; j < 5; j++) seq.push(min + j); }
@@ -171,15 +211,24 @@ function genOrdinals() {
   return () => {
     const questions = [];
     const items = shuffle([...ALL_ITEMS]).slice(0, 10);
+    const usedPositions = new Set();
     for (let i = 0; i < 12; i++) {
-      const pos = rand(0, 9);
+      let pos = rand(0, 9);
+      if (usedPositions.size < 10) {
+        while (usedPositions.has(pos)) pos = rand(0, 9);
+      }
+      usedPositions.add(pos);
       const lineItems = shuffle([...items]).slice(0, Math.max(pos + 1, 5));
+      const emojiList = lineItems.map(it => it.emoji);
+      const answerEmoji = emojiList[pos];
+      const distractors = shuffle(emojiList.filter((e, idx) => idx !== pos)).slice(0, 3);
+      const options = shuffle([answerEmoji, ...distractors]);
       questions.push({
         type: 'ordinal',
         prompt: `Which item is in the ${ORDINAL_WORDS[pos]} position?`,
-        items: lineItems.map(it => it.emoji),
-        answer: pos,
-        options: makeOptions(pos, 0, lineItems.length - 1),
+        items: emojiList,
+        answer: answerEmoji,
+        options,
         hint: `Start counting from the left: first, second, third...`,
       });
     }
@@ -190,11 +239,19 @@ function genOrdinals() {
 function genNumberBonds(total) {
   return () => {
     const questions = [];
+    const used = new Set();
     for (let i = 0; i < 12; i++) {
-      const t = typeof total === 'number' ? total : rand(total[0], total[1]);
-      const part1 = rand(0, t);
-      const part2 = t - part1;
-      const missingPart = i % 2 === 0 ? 'right' : 'left';
+      let t, part1, part2, missingPart, key;
+      let attempts = 0;
+      do {
+        t = typeof total === 'number' ? total : rand(total[0], total[1]);
+        part1 = rand(0, t);
+        part2 = t - part1;
+        missingPart = i % 2 === 0 ? 'right' : 'left';
+        key = `${t}-${part1}-${missingPart}`;
+        attempts++;
+      } while (used.has(key) && attempts < 30);
+      used.add(key);
       questions.push({
         type: 'numberBonds',
         prompt: `Complete the number bond!`,
@@ -213,10 +270,18 @@ function genNumberBonds(total) {
 function genAddition(min, max) {
   return () => {
     const questions = [];
+    const used = new Set();
     for (let i = 0; i < 12; i++) {
-      const a = rand(min, Math.floor(max / 2));
-      const b = rand(min, max - a);
-      const sum = a + b;
+      let a, b, sum, key;
+      let attempts = 0;
+      do {
+        a = rand(min, Math.floor(max / 2));
+        b = rand(min, max - a);
+        sum = a + b;
+        key = `${a}+${b}`;
+        attempts++;
+      } while (used.has(key) && attempts < 30);
+      used.add(key);
       const itemA = pick(ALL_ITEMS);
       const itemB = pick(ALL_ITEMS);
       questions.push({
@@ -237,6 +302,7 @@ function genAddition(min, max) {
 function genAdditionStories(max) {
   return () => {
     const questions = [];
+    const used = new Set();
     const stories = [
       (a, b, item) => `You have ${a} ${item.name} and find ${b} more. How many ${item.name} do you have now?`,
       (a, b, item) => `There are ${a} ${item.name} on the table. ${b} more ${item.name} are added. How many ${item.name} are there?`,
@@ -244,10 +310,17 @@ function genAdditionStories(max) {
       (a, b, item) => `You see ${a} ${item.name} in the garden. Then ${b} more appear! How many ${item.name} altogether?`,
     ];
     for (let i = 0; i < 12; i++) {
-      const a = rand(1, Math.floor(max / 2));
-      const b = rand(1, max - a);
-      const sum = a + b;
-      const item = pick(ALL_ITEMS);
+      let a, b, sum, item, key;
+      let attempts = 0;
+      do {
+        a = rand(1, Math.floor(max / 2));
+        b = rand(1, max - a);
+        sum = a + b;
+        item = pick(ALL_ITEMS);
+        key = `${a}+${b}-${item.emoji}`;
+        attempts++;
+      } while (used.has(key) && attempts < 30);
+      used.add(key);
       questions.push({
         type: 'wordProblem',
         prompt: pick(stories)(a, b, item),
@@ -264,10 +337,18 @@ function genAdditionStories(max) {
 function genSubtraction(min, max) {
   return () => {
     const questions = [];
+    const used = new Set();
     for (let i = 0; i < 12; i++) {
-      const a = rand(Math.ceil(max / 3), max);
-      const b = rand(min, a);
-      const diff = a - b;
+      let a, b, diff, key;
+      let attempts = 0;
+      do {
+        a = rand(Math.ceil(max / 3), max);
+        b = rand(min, a);
+        diff = a - b;
+        key = `${a}-${b}`;
+        attempts++;
+      } while (used.has(key) && attempts < 30);
+      used.add(key);
       const item = pick(ALL_ITEMS);
       questions.push({
         type: 'subtraction',
@@ -286,6 +367,7 @@ function genSubtraction(min, max) {
 function genSubtractionStories(max) {
   return () => {
     const questions = [];
+    const used = new Set();
     const stories = [
       (a, b, item) => `You have ${a} ${item.name}. You give away ${b}. How many ${item.name} are left?`,
       (a, b, item) => `There are ${a} ${item.name} on the plate. You eat ${b}. How many are left?`,
@@ -293,10 +375,17 @@ function genSubtractionStories(max) {
       (a, b, item) => `You count ${a} ${item.name}. ${b} fly away! How many ${item.name} remain?`,
     ];
     for (let i = 0; i < 12; i++) {
-      const a = rand(Math.ceil(max / 3), max);
-      const b = rand(1, a);
-      const diff = a - b;
-      const item = pick(ALL_ITEMS);
+      let a, b, diff, item, key;
+      let attempts = 0;
+      do {
+        a = rand(Math.ceil(max / 3), max);
+        b = rand(1, a);
+        diff = a - b;
+        item = pick(ALL_ITEMS);
+        key = `${a}-${b}-${item.emoji}`;
+        attempts++;
+      } while (used.has(key) && attempts < 30);
+      used.add(key);
       questions.push({
         type: 'wordProblem',
         prompt: pick(stories)(a, b, item),
@@ -313,10 +402,18 @@ function genSubtractionStories(max) {
 function genFactFamilies(max) {
   return () => {
     const questions = [];
+    const used = new Set();
     for (let i = 0; i < 12; i++) {
-      const a = rand(1, Math.floor(max / 2));
-      const b = rand(1, max - a);
-      const total = a + b;
+      let a, b, total, key;
+      let attempts = 0;
+      do {
+        a = rand(1, Math.floor(max / 2));
+        b = rand(1, max - a);
+        total = a + b;
+        key = `${Math.min(a,b)}-${Math.max(a,b)}`;
+        attempts++;
+      } while (used.has(key) && attempts < 30);
+      used.add(key);
       const facts = shuffle([
         { prompt: `${a} + ${b} = ?`, answer: total },
         { prompt: `${b} + ${a} = ?`, answer: total },
@@ -339,8 +436,16 @@ function genFactFamilies(max) {
 function genShapes2D(shapes) {
   return () => {
     const questions = [];
+    const used = new Set();
     for (let i = 0; i < 12; i++) {
-      const target = pick(shapes);
+      let target, key;
+      let attempts = 0;
+      do {
+        target = pick(shapes);
+        key = `${i % 3}-${target}`;
+        attempts++;
+      } while (used.has(key) && attempts < 30);
+      used.add(key);
       const others = shuffle(SHAPES_2D.filter(s => s !== target)).slice(0, 3);
       if (i % 3 === 0) {
         questions.push({
@@ -383,8 +488,16 @@ function genShapes2D(shapes) {
 function genShapePatterns() {
   return () => {
     const questions = [];
+    const used = new Set();
     for (let i = 0; i < 12; i++) {
-      const patternShapes = shuffle(SHAPES_2D).slice(0, rand(2, 3));
+      let patternShapes, key;
+      let attempts = 0;
+      do {
+        patternShapes = shuffle(SHAPES_2D).slice(0, rand(2, 3));
+        key = patternShapes.join(',');
+        attempts++;
+      } while (used.has(key) && attempts < 30);
+      used.add(key);
       const pattern = [];
       for (let j = 0; j < 6; j++) pattern.push(patternShapes[j % patternShapes.length]);
       const answer = pattern[pattern.length - 1];
@@ -413,8 +526,16 @@ function genShapes3D() {
       { name: 'cone', desc: '1 flat circle and 1 pointy top', emoji: '🍦' },
     ];
     const questions = [];
+    const used = new Set();
     for (let i = 0; i < 12; i++) {
-      const shape = pick(shapes3D);
+      let shape, key;
+      let attempts = 0;
+      do {
+        shape = pick(shapes3D);
+        key = `${i % 2}-${shape.name}`;
+        attempts++;
+      } while (used.has(key) && attempts < 30);
+      used.add(key);
       const others = shuffle(shapes3D.filter(s => s.name !== shape.name)).slice(0, 3);
       if (i % 2 === 0) {
         questions.push({
@@ -441,8 +562,16 @@ function genShapes3D() {
 function genPlaceValue(max) {
   return () => {
     const questions = [];
+    const used = new Set();
     for (let i = 0; i < 12; i++) {
-      const num = rand(11, max);
+      let num, key;
+      let attempts = 0;
+      do {
+        num = rand(11, max);
+        key = `${i % 3}-${num}`;
+        attempts++;
+      } while (used.has(key) && attempts < 30);
+      used.add(key);
       const tens = Math.floor(num / 10);
       const ones = num % 10;
       if (i % 3 === 0) {
@@ -483,13 +612,21 @@ function genLength(compare) {
       { name: 'ribbon', emoji: '🎀' }, { name: 'snake', emoji: '🐍' },
       { name: 'worm', emoji: '🪱' }, { name: 'rope', emoji: '🪢' },
     ];
+    const used = new Set();
     for (let i = 0; i < 12; i++) {
       if (compare) {
-        const a = pick(items);
-        let b = pick(items);
-        while (b.name === a.name) b = pick(items);
-        const aLen = rand(2, 10);
-        const bLen = rand(2, 10);
+        let a, b, aLen, bLen, key;
+        let attempts = 0;
+        do {
+          a = pick(items);
+          b = pick(items);
+          while (b.name === a.name) b = pick(items);
+          aLen = rand(2, 10);
+          bLen = rand(2, 10);
+          key = `${a.name}-${b.name}-${aLen}-${bLen}`;
+          attempts++;
+        } while (used.has(key) && attempts < 30);
+        used.add(key);
         questions.push({
           type: 'compare',
           prompt: `The ${a.name} ${a.emoji} is ${aLen} units long. The ${b.name} ${b.emoji} is ${bLen} units long. Which is longer?`,
@@ -504,8 +641,15 @@ function genLength(compare) {
           hint: 'Compare the numbers! The bigger number means longer.',
         });
       } else {
-        const item = pick(items);
-        const length = rand(2, 12);
+        let item, length, key;
+        let attempts = 0;
+        do {
+          item = pick(items);
+          length = rand(2, 12);
+          key = `${item.name}-${length}`;
+          attempts++;
+        } while (used.has(key) && attempts < 30);
+        used.add(key);
         questions.push({
           type: 'multipleChoice',
           prompt: `The ${item.name} ${item.emoji} is ${length} paper clips long. How many paper clips?`,
@@ -522,15 +666,23 @@ function genLength(compare) {
 function genMass(compare) {
   return () => {
     const questions = [];
+    const used = new Set();
     const items = [
       { name: 'apple', emoji: '🍎' }, { name: 'watermelon', emoji: '🍉' },
       { name: 'feather', emoji: '🪶' }, { name: 'book', emoji: '📚' },
       { name: 'teddy bear', emoji: '🧸' }, { name: 'brick', emoji: '🧱' },
     ];
     for (let i = 0; i < 12; i++) {
-      const a = pick(items);
-      let b = pick(items);
-      while (b.name === a.name) b = pick(items);
+      let a, b, key;
+      let attempts = 0;
+      do {
+        a = pick(items);
+        b = pick(items);
+        while (b.name === a.name) b = pick(items);
+        key = `${a.name}-${b.name}`;
+        attempts++;
+      } while (used.has(key) && attempts < 30);
+      used.add(key);
       if (compare) {
         questions.push({
           type: 'multipleChoice',
@@ -565,10 +717,18 @@ function genCapacity() {
       { name: 'jug', emoji: '🫗', size: 'medium' },
       { name: 'pool', emoji: '🏊', size: 'large' },
     ];
+    const used = new Set();
     for (let i = 0; i < 12; i++) {
-      const a = pick(containers);
-      let b = pick(containers);
-      while (b.name === a.name) b = pick(containers);
+      let a, b, key;
+      let attempts = 0;
+      do {
+        a = pick(containers);
+        b = pick(containers);
+        while (b.name === a.name) b = pick(containers);
+        key = `${a.name}-${b.name}`;
+        attempts++;
+      } while (used.has(key) && attempts < 30);
+      used.add(key);
       const sizeOrder = { small: 1, medium: 2, large: 3 };
       questions.push({
         type: 'multipleChoice',
@@ -585,12 +745,21 @@ function genCapacity() {
 function genTime(type) {
   return () => {
     const questions = [];
+    const used = new Set();
     if (type === 'days') {
       const days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
       const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
       for (let i = 0; i < 12; i++) {
+        let key;
         if (i % 3 === 0) {
-          const dayIdx = rand(0, 5);
+          let dayIdx;
+          let attempts = 0;
+          do {
+            dayIdx = rand(0, 5);
+            key = `dayAfter-${dayIdx}`;
+            attempts++;
+          } while (used.has(key) && attempts < 30);
+          used.add(key);
           questions.push({
             type: 'multipleChoice',
             prompt: `What day comes after ${days[dayIdx]}?`,
@@ -599,7 +768,14 @@ function genTime(type) {
             hint: 'Think about the order of the days of the week!',
           });
         } else if (i % 3 === 1) {
-          const dayIdx = rand(0, 6);
+          let dayIdx;
+          let attempts = 0;
+          do {
+            dayIdx = rand(0, 6);
+            key = `dayNum-${dayIdx}`;
+            attempts++;
+          } while (used.has(key) && attempts < 30);
+          used.add(key);
           questions.push({
             type: 'multipleChoice',
             prompt: `Which day of the week is number ${dayIdx + 1}?`,
@@ -608,7 +784,14 @@ function genTime(type) {
             hint: 'Monday is the first day of the school week!',
           });
         } else {
-          const monthIdx = rand(0, 10);
+          let monthIdx;
+          let attempts = 0;
+          do {
+            monthIdx = rand(0, 10);
+            key = `monthAfter-${monthIdx}`;
+            attempts++;
+          } while (used.has(key) && attempts < 30);
+          used.add(key);
           questions.push({
             type: 'multipleChoice',
             prompt: `What month comes after ${months[monthIdx]}?`,
@@ -620,7 +803,13 @@ function genTime(type) {
       }
     } else if (type === 'oclock') {
       for (let i = 0; i < 12; i++) {
-        const hour = rand(1, 12);
+        let hour;
+        let attempts = 0;
+        do {
+          hour = rand(1, 12);
+          attempts++;
+        } while (used.has(hour) && attempts < 30);
+        used.add(hour);
         questions.push({
           type: 'clock',
           prompt: `What time is shown on the clock?`,
@@ -633,8 +822,14 @@ function genTime(type) {
       }
     } else {
       for (let i = 0; i < 12; i++) {
-        const hour = rand(1, 12);
+        let hour;
         const isHalf = i % 2 === 0;
+        let attempts = 0;
+        do {
+          hour = rand(1, 12);
+          attempts++;
+        } while (used.has(`${hour}-${isHalf}`) && attempts < 30);
+        used.add(`${hour}-${isHalf}`);
         questions.push({
           type: 'clock',
           prompt: `What time is shown on the clock?`,
@@ -658,9 +853,17 @@ function genTime(type) {
 function genMoney(type) {
   return () => {
     const questions = [];
+    const used = new Set();
     for (let i = 0; i < 12; i++) {
       if (type === 'recognize') {
-        const coin = pick(COINS_SG);
+        let coin, key;
+        let attempts = 0;
+        do {
+          coin = pick(COINS_SG);
+          key = `coin-${coin.label}`;
+          attempts++;
+        } while (used.has(key) && attempts < 30);
+        used.add(key);
         questions.push({
           type: 'multipleChoice',
           prompt: `This coin shows "${coin.label}". How much is it worth?`,
@@ -671,9 +874,16 @@ function genMoney(type) {
           hint: 'Read the number on the coin!',
         });
       } else if (type === 'count') {
-        const numCoins = rand(2, 4);
-        const selectedCoins = Array.from({ length: numCoins }, () => pick(COINS_SG.slice(0, 4)));
-        const total = selectedCoins.reduce((sum, c) => sum + c.value, 0);
+        let numCoins, selectedCoins, total, key;
+        let attempts = 0;
+        do {
+          numCoins = rand(2, 4);
+          selectedCoins = Array.from({ length: numCoins }, () => pick(COINS_SG.slice(0, 4)));
+          total = selectedCoins.reduce((sum, c) => sum + c.value, 0);
+          key = `count-${selectedCoins.map(c => c.label).sort().join(',')}`;
+          attempts++;
+        } while (used.has(key) && attempts < 30);
+        used.add(key);
         questions.push({
           type: 'multipleChoice',
           prompt: `Count the coins: ${selectedCoins.map(c => c.label).join(' + ')} = ?`,
@@ -682,14 +892,21 @@ function genMoney(type) {
           hint: 'Add up the value of each coin!',
         });
       } else {
-        const item = pick([
-          { name: 'candy', emoji: '🍬', price: rand(1, 5) * 10 },
-          { name: 'cookie', emoji: '🍪', price: rand(1, 5) * 10 },
-          { name: 'sticker', emoji: '⭐', price: rand(1, 3) * 10 },
-          { name: 'pencil', emoji: '✏️', price: rand(2, 5) * 10 },
-        ]);
-        const paid = item.price + rand(1, 3) * 10;
-        const change = paid - item.price;
+        let item, paid, change, key;
+        let attempts = 0;
+        do {
+          item = pick([
+            { name: 'candy', emoji: '🍬', price: rand(1, 5) * 10 },
+            { name: 'cookie', emoji: '🍪', price: rand(1, 5) * 10 },
+            { name: 'sticker', emoji: '⭐', price: rand(1, 3) * 10 },
+            { name: 'pencil', emoji: '✏️', price: rand(2, 5) * 10 },
+          ]);
+          paid = item.price + rand(1, 3) * 10;
+          change = paid - item.price;
+          key = `change-${item.name}-${item.price}-${paid}`;
+          attempts++;
+        } while (used.has(key) && attempts < 30);
+        used.add(key);
         questions.push({
           type: 'multipleChoice',
           prompt: `The ${item.emoji} ${item.name} costs ${item.price}¢. You pay ${paid}¢. How much change?`,
@@ -706,10 +923,18 @@ function genMoney(type) {
 function genMultiplication(type) {
   return () => {
     const questions = [];
+    const used = new Set();
     for (let i = 0; i < 12; i++) {
-      const groups = rand(2, 5);
-      const perGroup = rand(2, 5);
-      const total = groups * perGroup;
+      let groups, perGroup, total, key;
+      let attempts = 0;
+      do {
+        groups = rand(2, 5);
+        perGroup = rand(2, 5);
+        total = groups * perGroup;
+        key = `${groups}x${perGroup}`;
+        attempts++;
+      } while (used.has(key) && attempts < 30);
+      used.add(key);
       const item = pick(ALL_ITEMS);
       if (type === 'groups') {
         questions.push({
@@ -739,10 +964,18 @@ function genMultiplication(type) {
 function genDivision(type) {
   return () => {
     const questions = [];
+    const used = new Set();
     for (let i = 0; i < 12; i++) {
-      const divisor = rand(2, 5);
-      const quotient = rand(1, 5);
-      const total = divisor * quotient;
+      let divisor, quotient, total, key;
+      let attempts = 0;
+      do {
+        divisor = rand(2, 5);
+        quotient = rand(1, 5);
+        total = divisor * quotient;
+        key = `${total}/${divisor}`;
+        attempts++;
+      } while (used.has(key) && attempts < 30);
+      used.add(key);
       const item = pick(ALL_ITEMS);
       if (type === 'sharing') {
         questions.push({
@@ -772,9 +1005,17 @@ function genDivision(type) {
 function genCountByTens() {
   return () => {
     const questions = [];
+    const used = new Set();
     for (let i = 0; i < 12; i++) {
       if (i % 3 === 0) {
-        const start = rand(1, 5) * 10;
+        let start, key;
+        let attempts = 0;
+        do {
+          start = rand(1, 5) * 10;
+          key = `tens-${start}`;
+          attempts++;
+        } while (used.has(key) && attempts < 30);
+        used.add(key);
         const seq = [start, start + 10, start + 20, start + 30];
         const blankIdx = rand(1, 3);
         questions.push({
@@ -786,7 +1027,14 @@ function genCountByTens() {
           hint: 'Each number is 10 more than the last!',
         });
       } else {
-        const num = rand(1, 10) * 10;
+        let num, key;
+        let attempts = 0;
+        do {
+          num = rand(1, 10) * 10;
+          key = `howmany-${num}`;
+          attempts++;
+        } while (used.has(key) && attempts < 30);
+        used.add(key);
         questions.push({
           type: 'multipleChoice',
           prompt: `How many tens are in ${num}?`,
