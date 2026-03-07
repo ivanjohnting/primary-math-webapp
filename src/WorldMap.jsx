@@ -21,17 +21,6 @@ export default function WorldMap({ gameState, onSelectLevel, onBack }) {
     }
   }, [currentLevel]);
 
-  const getNodePosition = (index) => {
-    const row = Math.floor(index / 4);
-    const col = index % 4;
-    const isEvenRow = row % 2 === 0;
-    const x = isEvenRow ? col : 3 - col;
-    return {
-      left: `${15 + x * 23}%`,
-      top: `${row * 90 + 20}px`,
-    };
-  };
-
   return (
     <div className="screen world-map">
       <div className="map-header">
@@ -76,7 +65,6 @@ export default function WorldMap({ gameState, onSelectLevel, onBack }) {
                   const isUnlocked = level.id <= currentLevel;
                   const isCurrent = level.id === currentLevel;
                   const stars = completedLevels[level.id]?.stars || 0;
-                  const pos = getNodePosition(idx);
                   const petReward = PETS.find(p => p.unlockLevel === level.id);
 
                   return (
@@ -84,7 +72,6 @@ export default function WorldMap({ gameState, onSelectLevel, onBack }) {
                       key={level.id}
                       className={`level-node ${isCompleted ? 'completed' : ''} ${isUnlocked ? 'unlocked' : 'locked'} ${isCurrent ? 'current' : ''}`}
                       data-level={level.id}
-                      style={pos}
                       onClick={() => isUnlocked && onSelectLevel(level.id)}
                     >
                       <div className="node-circle">
@@ -105,6 +92,11 @@ export default function WorldMap({ gameState, onSelectLevel, onBack }) {
                       {isCurrent && !isCompleted && (
                         <div className="current-indicator">
                           <Character config={character} size={36} animated />
+                          {activePet && (
+                            <div className="pet-follower">
+                              {PETS.find(p => p.id === activePet)?.emoji}
+                            </div>
+                          )}
                         </div>
                       )}
                       <div className="node-label">{level.name}</div>

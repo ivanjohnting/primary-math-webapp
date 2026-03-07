@@ -407,12 +407,10 @@ h1, h2, h3 { font-family: 'Fredoka One', cursive; }
 .zone-desc { font-size: 0.85rem; color: #666; margin: 0; }
 
 .zone-levels {
-  position: relative;
-  min-height: 300px;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 15px;
-  padding: 10px;
+  gap: 20px 15px;
+  padding: 20px 15px;
 }
 
 .level-node {
@@ -482,6 +480,20 @@ h1, h2, h3 { font-family: 'Fredoka One', cursive; }
   position: absolute;
   top: -30px;
   animation: bounce-gentle 1.5s ease-in-out infinite;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.pet-follower {
+  font-size: 1.2rem;
+  animation: pet-bounce 2s ease-in-out infinite;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2));
+}
+
+@keyframes pet-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
 }
 
 .pet-badge {
