@@ -1284,6 +1284,575 @@ function genGrandReview() {
   };
 }
 
+// ===== IQ BONUS LEVEL GENERATORS (7-9 year old difficulty) =====
+
+function genIQNumbers() {
+  return () => {
+    const questions = [];
+    const used = new Set();
+    const makers = [
+      // Tricky sequences: differences increase
+      () => {
+        const start = rand(1, 5);
+        const seq = [start];
+        for (let i = 1; i <= 4; i++) seq.push(seq[i - 1] + i);
+        const answer = seq[4];
+        return {
+          type: 'multipleChoice',
+          prompt: `What comes next? ${seq.slice(0, 4).join(', ')}, ?`,
+          answer,
+          options: makeOptions(answer, answer - 4, answer + 4),
+          hint: 'Look at the gaps between numbers — are they getting bigger?',
+        };
+      },
+      // Doubling sequences
+      () => {
+        const start = rand(1, 4);
+        const seq = [start, start * 2, start * 4, start * 8];
+        const answer = start * 16;
+        return {
+          type: 'multipleChoice',
+          prompt: `What comes next? ${seq.join(', ')}, ?`,
+          answer,
+          options: makeOptions(answer, answer - 10, answer + 10),
+          hint: 'Each number is double the one before!',
+        };
+      },
+      // "What number am I?" riddles
+      () => {
+        const num = rand(12, 30);
+        const tens = Math.floor(num / 10);
+        const ones = num % 10;
+        const isEven = num % 2 === 0;
+        return {
+          type: 'multipleChoice',
+          prompt: `I am a number. My tens digit is ${tens}. My ones digit is ${ones}. I am ${isEven ? 'even' : 'odd'}. What number am I?`,
+          answer: num,
+          options: makeOptions(num, num - 5, num + 5),
+          hint: `Put the tens and ones together!`,
+        };
+      },
+      // Missing number in equation
+      () => {
+        const a = rand(3, 15);
+        const b = rand(3, 15);
+        const sum = a + b;
+        const c = rand(1, sum - 1);
+        const answer = sum - c;
+        return {
+          type: 'multipleChoice',
+          prompt: `? + ${c} = ${a} + ${b}`,
+          answer,
+          options: makeOptions(answer, Math.max(1, answer - 5), answer + 5),
+          hint: `First work out what ${a} + ${b} equals, then find the missing number!`,
+        };
+      },
+      // Odd one out
+      () => {
+        const type = pick(['even', 'odd', 'mult3']);
+        let nums, oddOne;
+        if (type === 'even') {
+          nums = [rand(1, 10) * 2, rand(1, 10) * 2, rand(1, 10) * 2];
+          oddOne = rand(1, 10) * 2 + 1;
+          while (nums.includes(oddOne)) oddOne = rand(1, 10) * 2 + 1;
+        } else if (type === 'odd') {
+          nums = [rand(1, 10) * 2 + 1, rand(1, 10) * 2 + 1, rand(1, 10) * 2 + 1];
+          oddOne = rand(1, 10) * 2;
+          while (nums.includes(oddOne)) oddOne = rand(1, 10) * 2;
+        } else {
+          nums = [3, 6, 9, 12, 15, 18].sort(() => Math.random() - 0.5).slice(0, 3);
+          oddOne = pick([4, 5, 7, 8, 10, 11, 13, 14]);
+        }
+        const allNums = shuffle([...nums, oddOne]);
+        return {
+          type: 'multipleChoice',
+          prompt: `Which number does NOT belong? ${allNums.join(', ')}`,
+          answer: oddOne,
+          options: allNums,
+          hint: type === 'mult3' ? 'Most of these numbers are in the 3-times pattern!' : `Most of these numbers are ${type}!`,
+        };
+      },
+      // Subtraction missing number
+      () => {
+        const answer = rand(5, 20);
+        const b = rand(3, 12);
+        const total = answer + b;
+        return {
+          type: 'multipleChoice',
+          prompt: `${total} − ? = ${b}`,
+          answer,
+          options: makeOptions(answer, Math.max(1, answer - 5), answer + 5),
+          hint: `What do you take away from ${total} to get ${b}?`,
+        };
+      },
+      // Sum of consecutive numbers
+      () => {
+        const start = rand(1, 8);
+        const answer = start + (start + 1) + (start + 2);
+        return {
+          type: 'multipleChoice',
+          prompt: `What is ${start} + ${start + 1} + ${start + 2}?`,
+          answer,
+          options: makeOptions(answer, answer - 4, answer + 4),
+          hint: 'Add the numbers one step at a time!',
+        };
+      },
+      // Backward counting pattern
+      () => {
+        const step = rand(2, 5);
+        const start = step * rand(6, 12);
+        const seq = [start, start - step, start - step * 2, start - step * 3];
+        const answer = start - step * 4;
+        return {
+          type: 'multipleChoice',
+          prompt: `What comes next? ${seq.join(', ')}, ?`,
+          answer,
+          options: makeOptions(answer, Math.max(0, answer - 6), answer + 6),
+          hint: `Each number goes down by the same amount!`,
+        };
+      },
+    ];
+
+    const shuffled = shuffle(makers);
+    for (let i = 0; i < 12; i++) {
+      let q;
+      let attempts = 0;
+      do {
+        q = shuffled[i % shuffled.length]();
+        attempts++;
+      } while (used.has(q.prompt) && attempts < 30);
+      used.add(q.prompt);
+      questions.push(q);
+    }
+    return shuffle(questions);
+  };
+}
+
+function genIQShapes() {
+  return () => {
+    const questions = [];
+    const used = new Set();
+    const makers = [
+      // Counting sides of advanced shapes
+      () => {
+        const shapes = [
+          { name: 'pentagon', sides: 5 }, { name: 'hexagon', sides: 6 },
+          { name: 'octagon', sides: 8 }, { name: 'triangle', sides: 3 },
+        ];
+        const shape = pick(shapes);
+        return {
+          type: 'multipleChoice',
+          prompt: `A ${shape.name} has how many sides?`,
+          answer: shape.sides,
+          options: shuffle([3, 5, 6, 8]),
+          hint: `"Penta" = 5, "Hexa" = 6, "Octa" = 8!`,
+        };
+      },
+      // Folding shapes
+      () => {
+        const folds = [
+          { shape: 'square', fold: 'in half diagonally', result: 'triangle' },
+          { shape: 'rectangle', fold: 'in half along its length', result: 'rectangle' },
+          { shape: 'circle', fold: 'in half', result: 'semicircle' },
+          { shape: 'square', fold: 'in half along the middle', result: 'rectangle' },
+        ];
+        const f = pick(folds);
+        return {
+          type: 'multipleChoice',
+          prompt: `If you fold a ${f.shape} ${f.fold}, what shape do you get?`,
+          answer: f.result,
+          options: shuffle([f.result, ...shuffle(['triangle', 'rectangle', 'semicircle', 'square', 'circle'].filter(s => s !== f.result)).slice(0, 3)]),
+          hint: `Imagine folding a piece of paper!`,
+        };
+      },
+      // Shapes in a figure
+      () => {
+        const total = rand(3, 8);
+        const type = pick(['triangles', 'squares', 'rectangles']);
+        return {
+          type: 'multipleChoice',
+          prompt: `A picture is made of ${total} ${type} and ${rand(1, 4)} circles. How many ${type} are there?`,
+          answer: total,
+          options: makeOptions(total, 1, total + 4),
+          hint: `Read the question carefully — it tells you!`,
+        };
+      },
+      // Symmetry
+      () => {
+        const shapes = [
+          { name: 'square', lines: 4 }, { name: 'rectangle', lines: 2 },
+          { name: 'equilateral triangle', lines: 3 }, { name: 'circle', lines: 'infinite' },
+        ];
+        const shape = pick(shapes.filter(s => s.lines !== 'infinite'));
+        return {
+          type: 'multipleChoice',
+          prompt: `How many lines of symmetry does a ${shape.name} have?`,
+          answer: shape.lines,
+          options: shuffle([1, 2, 3, 4]),
+          hint: `A line of symmetry divides the shape into two matching halves!`,
+        };
+      },
+      // Shape properties comparison
+      () => {
+        const shapes = [
+          { name: 'hexagon', sides: 6 }, { name: 'pentagon', sides: 5 },
+          { name: 'octagon', sides: 8 }, { name: 'triangle', sides: 3 },
+        ];
+        const [a, b] = shuffle(shapes).slice(0, 2);
+        const answer = a.sides + b.sides;
+        return {
+          type: 'multipleChoice',
+          prompt: `A ${a.name} and a ${b.name} together have how many sides in total?`,
+          answer,
+          options: makeOptions(answer, answer - 4, answer + 4),
+          hint: `Add the sides of both shapes!`,
+        };
+      },
+      // 3D shape faces
+      () => {
+        const shapes = [
+          { name: 'cube', faces: 6 }, { name: 'triangular pyramid', faces: 4 },
+          { name: 'rectangular prism', faces: 6 }, { name: 'cylinder', faces: 3 },
+        ];
+        const s = pick(shapes);
+        return {
+          type: 'multipleChoice',
+          prompt: `How many faces does a ${s.name} have?`,
+          answer: s.faces,
+          options: shuffle([3, 4, 5, 6]),
+          hint: `A face is a flat surface of a 3D shape!`,
+        };
+      },
+      // Pattern with shapes: what comes next
+      () => {
+        const patterns = [
+          { seq: '▲ ■ ▲ ■ ■ ▲ ■ ■ ■ ?', answer: '▲', opts: ['▲', '■', '⬤', '▬'] },
+          { seq: '⬤ ▲ ⬤ ⬤ ▲ ⬤ ⬤ ⬤ ▲ ?', answer: '⬤', opts: ['▲', '■', '⬤', '▬'] },
+          { seq: '■ ■ ▲ ■ ■ ▲ ■ ■ ?', answer: '▲', opts: ['▲', '■', '⬤', '▬'] },
+        ];
+        const p = pick(patterns);
+        return {
+          type: 'multipleChoice',
+          prompt: `What comes next? ${p.seq}`,
+          answer: p.answer,
+          options: shuffle(p.opts),
+          hint: `Look for the repeating group in the pattern!`,
+        };
+      },
+      // Rotation
+      () => {
+        const items = [
+          { q: 'If you turn a square 90 degrees, what shape do you see?', answer: 'square', hint: 'All sides of a square are equal!' },
+          { q: 'If you turn a rectangle 90 degrees, what shape do you see?', answer: 'rectangle', hint: 'It might look taller or wider but it\'s still the same shape!' },
+          { q: 'If you look at a cube from directly above, what shape do you see?', answer: 'square', hint: 'Imagine looking straight down at a box!' },
+          { q: 'If you look at a cylinder from the side, what shape do you see?', answer: 'rectangle', hint: 'Think about what a tin can looks like from the side!' },
+        ];
+        const item = pick(items);
+        return {
+          type: 'multipleChoice',
+          prompt: item.q,
+          answer: item.answer,
+          options: shuffle(['circle', 'square', 'rectangle', 'triangle']),
+          hint: item.hint,
+        };
+      },
+    ];
+
+    const shuffled = shuffle(makers);
+    for (let i = 0; i < 12; i++) {
+      let q;
+      let attempts = 0;
+      do {
+        q = shuffled[i % shuffled.length]();
+        attempts++;
+      } while (used.has(q.prompt) && attempts < 30);
+      used.add(q.prompt);
+      questions.push(q);
+    }
+    return shuffle(questions);
+  };
+}
+
+function genIQLogic() {
+  return () => {
+    const questions = [];
+    const used = new Set();
+    const names = ['Amy', 'Ben', 'Cal', 'Dee', 'Eve', 'Finn', 'Gina', 'Hugo'];
+    const makers = [
+      // Transitive comparison
+      () => {
+        const [a, b, c] = shuffle(names).slice(0, 3);
+        const prop = pick(['taller', 'older', 'faster']);
+        return {
+          type: 'multipleChoice',
+          prompt: `${a} is ${prop} than ${b}. ${b} is ${prop} than ${c}. Who is the ${prop.replace('er', 'est')}?`,
+          answer: a,
+          options: shuffle([a, b, c]),
+          hint: `If A > B and B > C, then A is the greatest!`,
+        };
+      },
+      // Reverse transitive
+      () => {
+        const [a, b, c] = shuffle(names).slice(0, 3);
+        const prop = pick(['shorter', 'younger', 'lighter']);
+        return {
+          type: 'multipleChoice',
+          prompt: `${a} is ${prop} than ${b}. ${b} is ${prop} than ${c}. Who is the ${prop.replace('er', 'est')}?`,
+          answer: a,
+          options: shuffle([a, b, c]),
+          hint: `Follow the chain: who is the most ${prop.replace('er', '')}?`,
+        };
+      },
+      // Balance puzzles
+      () => {
+        const item1 = pick(['apple', 'banana', 'orange']);
+        const item2 = pick(['marble', 'block', 'coin']);
+        const ratio = rand(2, 4);
+        const count = rand(2, 4);
+        const answer = ratio * count;
+        return {
+          type: 'multipleChoice',
+          prompt: `1 ${item1} weighs the same as ${ratio} ${item2}s. How many ${item2}s weigh the same as ${count} ${item1}s?`,
+          answer,
+          options: makeOptions(answer, Math.max(2, answer - 4), answer + 4),
+          hint: `If 1 ${item1} = ${ratio} ${item2}s, then ${count} ${item1}s = ${count} × ${ratio} ${item2}s!`,
+        };
+      },
+      // Time logic
+      () => {
+        const mins = pick([15, 20, 25, 30, 45]);
+        const arriveHour = rand(7, 10);
+        const leaveMin = 60 - mins;
+        return {
+          type: 'multipleChoice',
+          prompt: `It takes ${mins} minutes to walk to school. I need to be there at ${arriveHour}:00. What time should I leave?`,
+          answer: `${arriveHour - 1}:${leaveMin === 60 ? '00' : leaveMin}`,
+          options: shuffle([
+            `${arriveHour - 1}:${leaveMin === 60 ? '00' : leaveMin}`,
+            `${arriveHour - 1}:${Math.max(0, leaveMin - 10)}`,
+            `${arriveHour}:${mins}`,
+            `${arriveHour - 1}:00`,
+          ]),
+          hint: `Count ${mins} minutes backward from ${arriveHour}:00!`,
+        };
+      },
+      // Seating/ordering logic
+      () => {
+        const [a, b, c, d] = shuffle(names).slice(0, 4);
+        return {
+          type: 'multipleChoice',
+          prompt: `${a} is sitting between ${b} and ${c}. ${d} is next to ${b} (not next to ${a}). Who is at the end?`,
+          answer: d,
+          options: shuffle([a, b, c, d]),
+          hint: `Draw it out: ${d} — ${b} — ${a} — ${c}`,
+        };
+      },
+      // "How many?" counting logic
+      () => {
+        const people = rand(3, 6);
+        const answer = (people * (people - 1)) / 2;
+        return {
+          type: 'multipleChoice',
+          prompt: `There are ${people} friends. Each friend shakes hands with every other friend once. How many handshakes are there in total?`,
+          answer,
+          options: makeOptions(answer, Math.max(1, answer - 3), answer + 4),
+          hint: `The first person shakes ${people - 1} hands, the next shakes ${people - 2} new hands, and so on!`,
+        };
+      },
+      // Age puzzles
+      () => {
+        const [a, b] = shuffle(names).slice(0, 2);
+        const ageA = rand(6, 10);
+        const diff = rand(2, 5);
+        const answer = ageA + diff;
+        return {
+          type: 'multipleChoice',
+          prompt: `${a} is ${ageA} years old. ${b} is ${diff} years older than ${a}. How old is ${b}?`,
+          answer,
+          options: makeOptions(answer, answer - 3, answer + 3),
+          hint: `Add ${diff} to ${a}'s age!`,
+        };
+      },
+      // Coin puzzle
+      () => {
+        const coins = rand(3, 7);
+        const total = coins * 10;
+        return {
+          type: 'multipleChoice',
+          prompt: `I have ${coins} coins that are each worth 10 cents. How much money do I have in total?`,
+          answer: `${total} cents`,
+          options: shuffle([`${total} cents`, `${total - 10} cents`, `${total + 10} cents`, `${coins} cents`]),
+          hint: `Multiply the number of coins by 10!`,
+        };
+      },
+    ];
+
+    const shuffled = shuffle(makers);
+    for (let i = 0; i < 12; i++) {
+      let q;
+      let attempts = 0;
+      do {
+        q = shuffled[i % shuffled.length]();
+        attempts++;
+      } while (used.has(q.prompt) && attempts < 30);
+      used.add(q.prompt);
+      questions.push(q);
+    }
+    return shuffle(questions);
+  };
+}
+
+function genIQMath() {
+  return () => {
+    const questions = [];
+    const used = new Set();
+    const makers = [
+      // Multi-step word problem
+      () => {
+        const start = rand(15, 30);
+        const give = rand(3, 8);
+        const eat = rand(1, 5);
+        const answer = start - give - eat;
+        return {
+          type: 'multipleChoice',
+          prompt: `I have ${start} cookies. I give ${give} to my friend, then eat ${eat}. How many cookies do I have left?`,
+          answer,
+          options: makeOptions(answer, Math.max(0, answer - 4), answer + 4),
+          hint: `Subtract step by step: ${start} − ${give} = ?, then subtract ${eat} more!`,
+        };
+      },
+      // Simple multiplication/algebra
+      () => {
+        const a = rand(2, 6);
+        const answer = rand(2, 8);
+        const product = a * answer;
+        return {
+          type: 'multipleChoice',
+          prompt: `? × ${a} = ${product}`,
+          answer,
+          options: makeOptions(answer, Math.max(1, answer - 3), answer + 3),
+          hint: `What number times ${a} gives ${product}?`,
+        };
+      },
+      // Sharing with remainder
+      () => {
+        const divisor = rand(3, 6);
+        const quotient = rand(2, 5);
+        const remainder = rand(1, divisor - 1);
+        const total = divisor * quotient + remainder;
+        return {
+          type: 'multipleChoice',
+          prompt: `${total} stickers are shared equally among ${divisor} children. How many stickers are left over?`,
+          answer: remainder,
+          options: makeOptions(remainder, 0, divisor),
+          hint: `Divide ${total} by ${divisor}. The leftover is the remainder!`,
+        };
+      },
+      // Two-step with multiplication
+      () => {
+        const groups = rand(2, 5);
+        const perGroup = rand(3, 6);
+        const extra = rand(2, 8);
+        const answer = groups * perGroup + extra;
+        return {
+          type: 'multipleChoice',
+          prompt: `A shop has ${groups} boxes of ${perGroup} pencils each, plus ${extra} loose pencils. How many pencils in total?`,
+          answer,
+          options: makeOptions(answer, answer - 5, answer + 5),
+          hint: `First find ${groups} × ${perGroup}, then add ${extra}!`,
+        };
+      },
+      // Working backwards
+      () => {
+        const answer = rand(10, 25);
+        const added = rand(5, 12);
+        const result = answer + added;
+        return {
+          type: 'multipleChoice',
+          prompt: `I think of a number, add ${added}, and get ${result}. What was my number?`,
+          answer,
+          options: makeOptions(answer, answer - 4, answer + 4),
+          hint: `Work backwards: ${result} − ${added} = ?`,
+        };
+      },
+      // Working backwards with multiply
+      () => {
+        const answer = rand(2, 10);
+        const mult = rand(2, 5);
+        const result = answer * mult;
+        return {
+          type: 'multipleChoice',
+          prompt: `I think of a number, multiply it by ${mult}, and get ${result}. What was my number?`,
+          answer,
+          options: makeOptions(answer, Math.max(1, answer - 3), answer + 3),
+          hint: `Work backwards: ${result} ÷ ${mult} = ?`,
+        };
+      },
+      // Money change problem
+      () => {
+        const price = rand(3, 15) * 5; // multiples of 5
+        const paid = Math.ceil(price / 50) * 50 + (price % 50 === 0 ? 50 : 0);
+        const answer = paid - price;
+        return {
+          type: 'multipleChoice',
+          prompt: `A toy costs ${price} cents. I pay with ${paid} cents. How much change do I get?`,
+          answer: `${answer} cents`,
+          options: shuffle([`${answer} cents`, `${answer + 5} cents`, `${answer - 5 > 0 ? answer - 5 : answer + 10} cents`, `${answer + 15} cents`]),
+          hint: `Subtract: ${paid} − ${price} = ?`,
+        };
+      },
+      // Pattern with operations
+      () => {
+        const patterns = [
+          { seq: [2, 6, 18], answer: 54, rule: 'Each number is multiplied by 3!' },
+          { seq: [1, 4, 9, 16], answer: 25, rule: 'These are 1×1, 2×2, 3×3, 4×4... what is 5×5?' },
+          { seq: [1, 1, 2, 3, 5, 8], answer: 13, rule: 'Each number is the sum of the two before it!' },
+          { seq: [100, 95, 85, 70], answer: 50, rule: 'The gaps are getting bigger: −5, −10, −15, −20!' },
+        ];
+        const p = pick(patterns);
+        return {
+          type: 'multipleChoice',
+          prompt: `What comes next? ${p.seq.join(', ')}, ?`,
+          answer: p.answer,
+          options: makeOptions(p.answer, Math.max(0, p.answer - 8), p.answer + 8),
+          hint: p.rule,
+        };
+      },
+      // Fraction-like reasoning
+      () => {
+        const total = rand(2, 5) * 4; // divisible by 4
+        const half = total / 2;
+        const quarter = total / 4;
+        const q = pick([
+          { prompt: `Half of ${total} is...`, answer: half },
+          { prompt: `If I eat half of ${total} sweets, how many are left?`, answer: half },
+          { prompt: `A quarter of ${total} marbles is...`, answer: quarter },
+        ]);
+        return {
+          type: 'multipleChoice',
+          prompt: q.prompt,
+          answer: q.answer,
+          options: makeOptions(q.answer, Math.max(1, q.answer - 4), q.answer + 4),
+          hint: `Half means dividing by 2. A quarter means dividing by 4!`,
+        };
+      },
+    ];
+
+    const shuffled = shuffle(makers);
+    for (let i = 0; i < 12; i++) {
+      let q;
+      let attempts = 0;
+      do {
+        q = shuffled[i % shuffled.length]();
+        attempts++;
+      } while (used.has(q.prompt) && attempts < 30);
+      used.add(q.prompt);
+      questions.push(q);
+    }
+    return shuffle(questions);
+  };
+}
+
 // ===== ZONE & LEVEL DEFINITIONS =====
 export const ZONES = [
   { id: 1, name: 'Number Forest', color: '#2ecc71', bg: '#e8f8f0', icon: '🌳', description: 'Explore the magical forest of numbers!' },
@@ -1304,6 +1873,11 @@ export const PETS = [
   { id: 'parrot', name: 'Parrot', emoji: '🦜', unlockLevel: 42 },
   { id: 'star_sprite', name: 'Star Sprite', emoji: '✨', unlockLevel: 47 },
   { id: 'phoenix', name: 'Royal Phoenix', emoji: '🔥', unlockLevel: 52 },
+  // Mythical creatures for bonus IQ levels (require 10/12 to unlock)
+  { id: 'griffin', name: 'Golden Griffin', emoji: '🦅', unlockLevel: 101, bonusMinScore: 10 },
+  { id: 'kraken', name: 'Crystal Kraken', emoji: '🦑', unlockLevel: 102, bonusMinScore: 10 },
+  { id: 'frost_wolf', name: 'Frost Wolf', emoji: '🐺', unlockLevel: 103, bonusMinScore: 10 },
+  { id: 'sphinx', name: 'Ancient Sphinx', emoji: '🦁', unlockLevel: 104, bonusMinScore: 10 },
 ];
 
 export const LEVELS = [
@@ -1366,6 +1940,12 @@ export const LEVELS = [
   { id: 50, zone: 4, name: 'Graph Gallery', icon: '📊', topic: 'Reading Graphs', desc: 'Read picture graphs!', generate: genPictureGraph('read') },
   { id: 51, zone: 4, name: 'Chart Chamber', icon: '📈', topic: 'Making Graphs', desc: 'Create your own graphs!', generate: genPictureGraph('create') },
   { id: 52, zone: 4, name: 'Grand Finale! 🎆', icon: '👑', topic: 'Grand Math Review', desc: 'The ultimate math adventure!', generate: genGrandReview() },
+
+  // BONUS IQ LEVELS (always open, no unlocking needed, 10/12 for mythical pet)
+  { id: 101, zone: 1, name: 'Enigma Grove', icon: '🧩', topic: 'Number Puzzles', desc: 'Tricky number challenges for sharp minds!', generate: genIQNumbers(), bonus: true },
+  { id: 102, zone: 2, name: 'Riddle Reef', icon: '🔮', topic: 'Shape Puzzles', desc: 'Mind-bending shape and spatial puzzles!', generate: genIQShapes(), bonus: true },
+  { id: 103, zone: 3, name: 'Logic Lookout', icon: '🧠', topic: 'Logic Puzzles', desc: 'Can you solve these brain teasers?', generate: genIQLogic(), bonus: true },
+  { id: 104, zone: 4, name: 'Genius Gate', icon: '🏆', topic: 'Math Challenges', desc: 'The ultimate test for math geniuses!', generate: genIQMath(), bonus: true },
 ];
 
 export { SHAPE_EMOJI, SHAPES_2D };

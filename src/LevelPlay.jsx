@@ -186,10 +186,13 @@ export default function LevelPlay({ levelId, gameState, onComplete, onExit, onSw
     return (
       <div className="screen level-intro" style={{ '--zone-color': zone.color }}>
         <div className="intro-content">
-          <div className="intro-zone-badge">{zone.icon} {zone.name}</div>
+          <div className="intro-zone-badge">
+            {zone.icon} {zone.name}
+            {level.bonus && <span className="bonus-tag">IQ Challenge</span>}
+          </div>
           <h1 className="intro-level-name">
             <span className="intro-icon">{level.icon}</span>
-            Level {level.id}: {level.name}
+            {level.bonus ? level.name : `Level ${level.id}: ${level.name}`}
           </h1>
           <p className="intro-topic">{level.topic}</p>
           <p className="intro-desc">{level.desc}</p>
@@ -201,7 +204,7 @@ export default function LevelPlay({ levelId, gameState, onComplete, onExit, onSw
           {petReward && (
             <div className="intro-pet-preview">
               <span className="pet-preview-emoji">{petReward.emoji}</span>
-              <span>Complete to unlock {petReward.name}!</span>
+              <span>{petReward.bonusMinScore ? `Score ${petReward.bonusMinScore}/12 to unlock ${petReward.name}!` : `Complete to unlock ${petReward.name}!`}</span>
             </div>
           )}
           <div className="intro-character">
@@ -250,13 +253,21 @@ export default function LevelPlay({ levelId, gameState, onComplete, onExit, onSw
               <span className="stat-val">💎 {gemsEarned}</span>
             </div>
           </div>
-          {petReward && (
-            <div className="pet-unlock-celebration">
-              <div className="pet-unlock-emoji">{petReward.emoji}</div>
-              <h2>New Pet Unlocked!</h2>
-              <p>{petReward.name} has joined your adventure!</p>
-            </div>
-          )}
+          {petReward && (() => {
+            const earned = petReward.bonusMinScore ? score >= petReward.bonusMinScore : true;
+            return earned ? (
+              <div className="pet-unlock-celebration">
+                <div className="pet-unlock-emoji">{petReward.emoji}</div>
+                <h2>Mythical Pet Unlocked!</h2>
+                <p>{petReward.name} has joined your adventure!</p>
+              </div>
+            ) : (
+              <div className="pet-unlock-missed">
+                <div className="pet-missed-emoji">{petReward.emoji}</div>
+                <p>Score {petReward.bonusMinScore}/12 to unlock {petReward.name}! (You got {score}/12)</p>
+              </div>
+            );
+          })()}
           <button className="btn-continue" onClick={() => onComplete({ stars, gems: gemsEarned, score, total: questions.length })}>
             Continue →
           </button>

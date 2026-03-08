@@ -528,6 +528,70 @@ h1, h2, h3 { font-family: 'Fredoka One', cursive; }
   border: 2px solid var(--gold);
 }
 
+/* Bonus IQ level styling */
+.bonus-level .node-circle {
+  background: linear-gradient(135deg, #FFD700, #FF6B35) !important;
+  border: 3px solid #B8860B !important;
+}
+.bonus-circle {
+  position: relative;
+}
+.bonus-badge {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  background: #E91E63;
+  color: white;
+  font-size: 0.5rem;
+  font-weight: 900;
+  padding: 1px 4px;
+  border-radius: 6px;
+  line-height: 1;
+}
+.bonus-level .node-label {
+  font-weight: 900;
+  color: #B8860B;
+}
+.pet-badge.earned {
+  border-color: #E91E63;
+  background: #FFF0F5;
+}
+.pet-lock-mini {
+  font-size: 0.5rem;
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+}
+.bonus-tag {
+  display: inline-block;
+  background: linear-gradient(135deg, #FFD700, #FF6B35);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 8px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+.pet-unlock-missed {
+  text-align: center;
+  padding: 15px;
+  background: #FFF8E1;
+  border-radius: 15px;
+  margin: 10px 0;
+}
+.pet-missed-emoji {
+  font-size: 2.5rem;
+  opacity: 0.5;
+  filter: grayscale(0.5);
+}
+.pet-unlock-missed p {
+  color: #795548;
+  font-weight: 700;
+  font-size: 0.9rem;
+  margin-top: 5px;
+}
+
 .pets-drawer {
   position: fixed;
   bottom: 0;

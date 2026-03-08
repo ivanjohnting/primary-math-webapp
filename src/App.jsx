@@ -164,7 +164,12 @@ export default function App() {
         [currentLevel]: { stars: bestStars, score: result.score, total: result.total },
       };
 
-      const newPet = PETS.find(p => p.unlockLevel === currentLevel);
+      // Regular pets unlock on completion; bonus pets need score >= bonusMinScore
+      const newPet = PETS.find(p => {
+        if (p.unlockLevel !== currentLevel) return false;
+        if (p.bonusMinScore) return result.score >= p.bonusMinScore;
+        return true;
+      });
       const activePet = newPet ? newPet.id : prev.activePet;
 
       // Add to history

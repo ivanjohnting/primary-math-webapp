@@ -9,7 +9,14 @@ export default function WorldMap({ gameState, onSelectLevel, onBack, onSwitchPro
   const highestCompleted = Math.max(0, ...Object.keys(completedLevels).map(Number));
   const currentLevel = Math.min(highestCompleted + 1, 52);
 
-  const unlockedPets = PETS.filter(p => highestCompleted >= p.unlockLevel);
+  const unlockedPets = PETS.filter(p => {
+    if (p.bonusMinScore) {
+      // Bonus pets need score >= bonusMinScore
+      const completed = completedLevels[p.unlockLevel];
+      return completed && (completed.score || 0) >= p.bonusMinScore;
+    }
+    return highestCompleted >= p.unlockLevel;
+  });
   const totalStars = Object.values(completedLevels).reduce((sum, l) => sum + (l.stars || 0), 0);
 
   useEffect(() => {
@@ -51,7 +58,8 @@ export default function WorldMap({ gameState, onSelectLevel, onBack, onSwitchPro
 
       <div className="map-container" ref={mapRef}>
         {ZONES.map((zone) => {
-          const zoneLevels = LEVELS.filter(l => l.zone === zone.id);
+          const zoneLevels = LEVELS.filter(l => l.zone === zone.id && !l.bonus);
+          const bonusLevel = LEVELS.find(l => l.zone === zone.id && l.bonus);
           return (
             <div key={zone.id} className="zone-section" style={{ '--zone-color': zone.color, '--zone-bg': zone.bg }}>
               <div className="zone-banner">
@@ -111,6 +119,39 @@ export default function WorldMap({ gameState, onSelectLevel, onBack, onSwitchPro
                     </div>
                   );
                 })}
+
+                {/* Bonus IQ Level - always open */}
+                {bonusLevel && (() => {
+                  const isCompleted = !!completedLevels[bonusLevel.id];
+                  const stars = completedLevels[bonusLevel.id]?.stars || 0;
+                  const bonusPet = PETS.find(p => p.unlockLevel === bonusLevel.id);
+                  const petEarned = isCompleted && (completedLevels[bonusLevel.id]?.score || 0) >= 10;
+                  return (
+                    <div
+                      key={bonusLevel.id}
+                      className={`level-node bonus-level ${isCompleted ? 'completed' : ''} unlocked`}
+                      data-level={bonusLevel.id}
+                      onClick={() => onSelectLevel(bonusLevel.id)}
+                    >
+                      <div className="node-circle bonus-circle">
+                        <span className="level-icon">{bonusLevel.icon}</span>
+                        <span className="bonus-badge">IQ</span>
+                      </div>
+                      {isCompleted && (
+                        <div className="node-stars">
+                          {'⭐'.repeat(stars)}{'☆'.repeat(3 - stars)}
+                        </div>
+                      )}
+                      <div className="node-label">{bonusLevel.name}</div>
+                      {bonusPet && (
+                        <div className={`pet-badge ${petEarned ? 'earned' : ''}`} title={petEarned ? `${bonusPet.name} unlocked!` : `Score 10/12 to unlock ${bonusPet.name}!`}>
+                          {bonusPet.emoji}
+                          {!petEarned && <span className="pet-lock-mini">🔒</span>}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           );
