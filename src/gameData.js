@@ -436,6 +436,8 @@ function genFactFamilies(max) {
 function genShapes2D(shapes) {
   const SIDES = { circle: 0, triangle: 3, square: 4, rectangle: 4 };
   const CORNERS = { circle: 0, triangle: 3, square: 4, rectangle: 4 };
+  // Extended pool of shape names for varied wrong-answer options
+  const ALL_SHAPE_NAMES = ['circle', 'triangle', 'square', 'rectangle', 'pentagon', 'hexagon', 'oval', 'diamond'];
   const REAL_WORLD = {
     circle: [
       { obj: 'pizza', emoji: '🍕' }, { obj: 'clock', emoji: '🕐' },
@@ -444,13 +446,13 @@ function genShapes2D(shapes) {
     ],
     triangle: [
       { obj: 'slice of pizza', emoji: '🍕' }, { obj: 'roof of a house', emoji: '🏠' },
-      { obj: 'sandwich cut in half', emoji: '🥪' }, { obj: 'yield sign', emoji: '⚠️' },
+      { obj: 'slice of watermelon', emoji: '🍉' }, { obj: 'yield sign', emoji: '⚠️' },
       { obj: 'party hat', emoji: '🎉' }, { obj: 'mountain peak', emoji: '⛰️' },
     ],
     square: [
       { obj: 'window', emoji: '🪟' }, { obj: 'cracker', emoji: '🧇' },
-      { obj: 'dice face', emoji: '🎲' }, { obj: 'napkin', emoji: '🧻' },
-      { obj: 'sticky note', emoji: '📝' }, { obj: 'tile', emoji: '🟦' },
+      { obj: 'dice face', emoji: '🎲' }, { obj: 'sticky note', emoji: '📝' },
+      { obj: 'floor tile', emoji: '🟦' }, { obj: 'chess board square', emoji: '♟️' },
     ],
     rectangle: [
       { obj: 'door', emoji: '🚪' }, { obj: 'book', emoji: '📕' },
@@ -465,10 +467,24 @@ function genShapes2D(shapes) {
     rectangle: ['has 4 sides', 'has 4 corners', 'has 2 long sides and 2 short sides', 'has opposite sides that are equal'],
   };
 
+  // Build varied options for shape-name questions: answer + other level shapes + random extras
+  function shapeOptions(answer, count = 4) {
+    const opts = new Set([answer]);
+    for (const s of shuffle(shapes)) {
+      if (opts.size >= count) break;
+      opts.add(s);
+    }
+    const extras = shuffle(ALL_SHAPE_NAMES.filter(s => !opts.has(s)));
+    for (const s of extras) {
+      if (opts.size >= count) break;
+      opts.add(s);
+    }
+    return shuffle([...opts]);
+  }
+
   return () => {
     const questions = [];
     const used = new Set();
-    // Build a pool of question generators for variety
     const questionMakers = [];
 
     // Type 1: Shape identification (visual)
@@ -511,7 +527,7 @@ function genShapes2D(shapes) {
       }));
     }
 
-    // Type 4: Real-world identification
+    // Type 4: Real-world identification (options vary so square/rectangle aren't permanently "always wrong")
     for (const s of shapes) {
       const items = REAL_WORLD[s] || [];
       for (const item of items) {
@@ -519,7 +535,7 @@ function genShapes2D(shapes) {
           type: 'multipleChoice',
           prompt: `${item.emoji} What shape does a ${item.obj} look like?`,
           answer: s,
-          options: shuffle(SHAPES_2D),
+          options: shapeOptions(s),
           hint: `Think about the outline of a ${item.obj}!`,
         }));
       }
@@ -537,7 +553,6 @@ function genShapes2D(shapes) {
           hint: `Think carefully about what a ${s} looks like!`,
         }));
       }
-      // Also add false statements
       const otherShape = pick(shapes.filter(x => x !== s)) || pick(SHAPES_2D.filter(x => x !== s));
       const otherFacts = SHAPE_FACTS[otherShape] || [];
       if (otherFacts.length > 0) {
@@ -576,7 +591,6 @@ function genShapes2D(shapes) {
               hint: `Count the sides on each shape!`,
             };
           });
-          // Fewer sides question
           questionMakers.push(() => {
             const fewer = SIDES[s1] < SIDES[s2] ? s1 : SIDES[s2] < SIDES[s1] ? s2 : 'same';
             if (fewer === 'same') {
@@ -611,7 +625,7 @@ function genShapes2D(shapes) {
           type: 'multipleChoice',
           prompt: `Which shape is ${desc}?`,
           answer: s,
-          options: shuffle(SHAPES_2D),
+          options: shapeOptions(s),
           hint: `Think about the properties of each shape!`,
         };
       });
