@@ -434,54 +434,203 @@ function genFactFamilies(max) {
 }
 
 function genShapes2D(shapes) {
+  const SIDES = { circle: 0, triangle: 3, square: 4, rectangle: 4 };
+  const CORNERS = { circle: 0, triangle: 3, square: 4, rectangle: 4 };
+  const REAL_WORLD = {
+    circle: [
+      { obj: 'pizza', emoji: '🍕' }, { obj: 'clock', emoji: '🕐' },
+      { obj: 'coin', emoji: '🪙' }, { obj: 'wheel', emoji: '🎡' },
+      { obj: 'ball', emoji: '⚽' }, { obj: 'plate', emoji: '🍽️' },
+    ],
+    triangle: [
+      { obj: 'slice of pizza', emoji: '🍕' }, { obj: 'roof of a house', emoji: '🏠' },
+      { obj: 'sandwich cut in half', emoji: '🥪' }, { obj: 'yield sign', emoji: '⚠️' },
+      { obj: 'party hat', emoji: '🎉' }, { obj: 'mountain peak', emoji: '⛰️' },
+    ],
+    square: [
+      { obj: 'window', emoji: '🪟' }, { obj: 'cracker', emoji: '🧇' },
+      { obj: 'dice face', emoji: '🎲' }, { obj: 'napkin', emoji: '🧻' },
+      { obj: 'sticky note', emoji: '📝' }, { obj: 'tile', emoji: '🟦' },
+    ],
+    rectangle: [
+      { obj: 'door', emoji: '🚪' }, { obj: 'book', emoji: '📕' },
+      { obj: 'phone screen', emoji: '📱' }, { obj: 'envelope', emoji: '✉️' },
+      { obj: 'flag', emoji: '🏳️' }, { obj: 'chocolate bar', emoji: '🍫' },
+    ],
+  };
+  const SHAPE_FACTS = {
+    circle: ['has no straight sides', 'is perfectly round', 'has no corners', 'can roll'],
+    triangle: ['has exactly 3 sides', 'has exactly 3 corners', 'is the shape with the fewest sides', 'has pointy corners'],
+    square: ['has 4 equal sides', 'has 4 corners', 'is a special rectangle', 'has all sides the same length'],
+    rectangle: ['has 4 sides', 'has 4 corners', 'has 2 long sides and 2 short sides', 'has opposite sides that are equal'],
+  };
+
   return () => {
     const questions = [];
     const used = new Set();
-    for (let i = 0; i < 12; i++) {
-      let target, key;
-      let attempts = 0;
-      do {
-        target = pick(shapes);
-        key = `${i % 3}-${target}`;
-        attempts++;
-      } while (used.has(key) && attempts < 30);
-      used.add(key);
-      const others = shuffle(SHAPES_2D.filter(s => s !== target)).slice(0, 3);
-      if (i % 3 === 0) {
-        questions.push({
+    // Build a pool of question generators for variety
+    const questionMakers = [];
+
+    // Type 1: Shape identification (visual)
+    for (const s of shapes) {
+      questionMakers.push(() => {
+        const others = shuffle(SHAPES_2D.filter(x => x !== s)).slice(0, 3);
+        return {
           type: 'shapeIdentify',
-          prompt: `Which shape is a ${target}?`,
-          targetShape: target,
-          shapes: shuffle([target, ...others]),
-          answer: target,
-          hint: target === 'circle' ? 'A circle is round with no corners!'
-            : target === 'triangle' ? 'A triangle has 3 sides and 3 corners!'
-            : target === 'square' ? 'A square has 4 equal sides!'
+          prompt: `Which shape is a ${s}?`,
+          targetShape: s,
+          shapes: shuffle([s, ...others]),
+          answer: s,
+          hint: s === 'circle' ? 'A circle is round with no corners!'
+            : s === 'triangle' ? 'A triangle has 3 sides and 3 corners!'
+            : s === 'square' ? 'A square has 4 equal sides!'
             : 'A rectangle has 2 long sides and 2 short sides!',
-        });
-      } else if (i % 3 === 1) {
-        const shape = pick(shapes);
-        const sides = { circle: 0, triangle: 3, square: 4, rectangle: 4 }[shape];
-        questions.push({
+        };
+      });
+    }
+
+    // Type 2: Count sides
+    for (const s of shapes) {
+      questionMakers.push(() => ({
+        type: 'multipleChoice',
+        prompt: `How many sides does a ${s} have?`,
+        answer: SIDES[s],
+        options: shuffle([0, 3, 4, 5]),
+        hint: 'Count the straight edges of the shape!',
+      }));
+    }
+
+    // Type 3: Count corners
+    for (const s of shapes) {
+      questionMakers.push(() => ({
+        type: 'multipleChoice',
+        prompt: `How many corners does a ${s} have?`,
+        answer: CORNERS[s],
+        options: shuffle([0, 3, 4, 5]),
+        hint: 'Corners are the pointy parts where sides meet!',
+      }));
+    }
+
+    // Type 4: Real-world identification
+    for (const s of shapes) {
+      const items = REAL_WORLD[s] || [];
+      for (const item of items) {
+        questionMakers.push(() => ({
           type: 'multipleChoice',
-          prompt: `How many sides does a ${shape} have?`,
-          answer: sides,
-          options: shuffle([0, 3, 4, 5].includes(sides) ? [0, 3, 4, 5] : makeOptions(sides, 0, 6)),
-          hint: `Count the straight edges of the shape!`,
-        });
-      } else {
-        const shape = pick(shapes);
-        const corners = { circle: 0, triangle: 3, square: 4, rectangle: 4 }[shape];
-        questions.push({
-          type: 'multipleChoice',
-          prompt: `How many corners does a ${shape} have?`,
-          answer: corners,
-          options: shuffle([0, 3, 4, 5].includes(corners) ? [0, 3, 4, 5] : makeOptions(corners, 0, 6)),
-          hint: `Corners are the pointy parts where sides meet!`,
-        });
+          prompt: `${item.emoji} What shape does a ${item.obj} look like?`,
+          answer: s,
+          options: shuffle(SHAPES_2D),
+          hint: `Think about the outline of a ${item.obj}!`,
+        }));
       }
     }
-    return questions;
+
+    // Type 5: True/false about shape properties
+    for (const s of shapes) {
+      const facts = SHAPE_FACTS[s] || [];
+      for (const fact of facts) {
+        questionMakers.push(() => ({
+          type: 'multipleChoice',
+          prompt: `True or false: A ${s} ${fact}.`,
+          answer: 'True',
+          options: shuffle(['True', 'False']),
+          hint: `Think carefully about what a ${s} looks like!`,
+        }));
+      }
+      // Also add false statements
+      const otherShape = pick(shapes.filter(x => x !== s)) || pick(SHAPES_2D.filter(x => x !== s));
+      const otherFacts = SHAPE_FACTS[otherShape] || [];
+      if (otherFacts.length > 0) {
+        const falseFact = pick(otherFacts);
+        questionMakers.push(() => ({
+          type: 'multipleChoice',
+          prompt: `True or false: A ${s} ${falseFact}.`,
+          answer: 'False',
+          options: shuffle(['True', 'False']),
+          hint: `That sounds more like a ${otherShape}!`,
+        }));
+      }
+    }
+
+    // Type 6: Compare shapes
+    if (shapes.length >= 2) {
+      for (let a = 0; a < shapes.length; a++) {
+        for (let b = a + 1; b < shapes.length; b++) {
+          const s1 = shapes[a], s2 = shapes[b];
+          questionMakers.push(() => {
+            const more = SIDES[s1] > SIDES[s2] ? s1 : SIDES[s2] > SIDES[s1] ? s2 : 'same';
+            if (more === 'same') {
+              return {
+                type: 'multipleChoice',
+                prompt: `Which has more corners: a ${s1} or a ${s2}?`,
+                answer: 'They are the same!',
+                options: shuffle([s1, s2, 'They are the same!']),
+                hint: `Count the corners on each shape!`,
+              };
+            }
+            return {
+              type: 'multipleChoice',
+              prompt: `Which has more sides: a ${s1} or a ${s2}?`,
+              answer: more,
+              options: shuffle([s1, s2, 'They are the same!']),
+              hint: `Count the sides on each shape!`,
+            };
+          });
+          // Fewer sides question
+          questionMakers.push(() => {
+            const fewer = SIDES[s1] < SIDES[s2] ? s1 : SIDES[s2] < SIDES[s1] ? s2 : 'same';
+            if (fewer === 'same') {
+              return {
+                type: 'multipleChoice',
+                prompt: `Which has fewer corners: a ${s1} or a ${s2}?`,
+                answer: 'They are the same!',
+                options: shuffle([s1, s2, 'They are the same!']),
+                hint: `Count the corners on each shape!`,
+              };
+            }
+            return {
+              type: 'multipleChoice',
+              prompt: `Which has fewer sides: a ${s1} or a ${s2}?`,
+              answer: fewer,
+              options: shuffle([s1, s2, 'They are the same!']),
+              hint: `Count the sides on each shape!`,
+            };
+          });
+        }
+      }
+    }
+
+    // Type 7: Describe shape
+    for (const s of shapes) {
+      questionMakers.push(() => {
+        const desc = s === 'circle' ? 'round with no corners'
+          : s === 'triangle' ? 'has 3 sides and 3 corners'
+          : s === 'square' ? 'has 4 equal sides and 4 corners'
+          : 'has 2 long sides and 2 short sides';
+        return {
+          type: 'multipleChoice',
+          prompt: `Which shape is ${desc}?`,
+          answer: s,
+          options: shuffle(SHAPES_2D),
+          hint: `Think about the properties of each shape!`,
+        };
+      });
+    }
+
+    // Shuffle and pick 12 unique questions
+    const shuffledMakers = shuffle(questionMakers);
+    for (let i = 0; i < 12; i++) {
+      const maker = shuffledMakers[i % shuffledMakers.length];
+      let q;
+      let attempts = 0;
+      do {
+        q = maker();
+        attempts++;
+      } while (used.has(q.prompt) && attempts < 30);
+      used.add(q.prompt);
+      questions.push(q);
+    }
+    return shuffle(questions);
   };
 }
 

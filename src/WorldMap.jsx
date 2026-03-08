@@ -2,7 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import { LEVELS, ZONES, PETS } from './gameData';
 import Character from './Character';
 
-export default function WorldMap({ gameState, onSelectLevel, onBack }) {
+export default function WorldMap({ gameState, onSelectLevel, onBack, onSwitchProfile }) {
   const mapRef = useRef(null);
   const { completedLevels, character, gems, activePet } = gameState;
 
@@ -43,6 +43,9 @@ export default function WorldMap({ gameState, onSelectLevel, onBack }) {
         <div className="map-character-mini">
           <Character config={character} size={50} />
           <span className="char-name">{character.name}</span>
+          {onSwitchProfile && (
+            <button className="btn-switch-map" onClick={onSwitchProfile} title="Switch Player">👤</button>
+          )}
         </div>
       </div>
 

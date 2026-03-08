@@ -91,7 +91,7 @@ function NumberBondDiagram({ total, left, right }) {
 }
 
 // ===== MAIN LEVEL PLAY COMPONENT =====
-export default function LevelPlay({ levelId, gameState, onComplete, onExit }) {
+export default function LevelPlay({ levelId, gameState, onComplete, onExit, onSwitchProfile }) {
   const level = LEVELS.find(l => l.id === levelId);
   const zone = ZONES.find(z => z.id === level.zone);
   const [questions, setQuestions] = useState([]);
@@ -212,6 +212,9 @@ export default function LevelPlay({ levelId, gameState, onComplete, onExit }) {
             Let's Go! 🚀
           </button>
           <button className="btn-back" onClick={onExit}>← Back to Map</button>
+          {onSwitchProfile && (
+            <button className="btn-switch-player" onClick={onSwitchProfile}>👤 Switch Player</button>
+          )}
         </div>
       </div>
     );
@@ -270,6 +273,9 @@ export default function LevelPlay({ levelId, gameState, onComplete, onExit }) {
       {/* Header */}
       <div className="play-header">
         <button className="btn-exit" onClick={onExit}>✕</button>
+        {onSwitchProfile && (
+          <button className="btn-switch-inline" onClick={onSwitchProfile} title="Switch Player">👤</button>
+        )}
         <div className="progress-bar-container">
           <div className="progress-bar" style={{ width: `${progress}%` }} />
           <span className="progress-text">{currentQ + 1} / {questions.length}</span>

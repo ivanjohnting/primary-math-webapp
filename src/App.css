@@ -374,6 +374,22 @@ h1, h2, h3 { font-family: 'Fredoka One', cursive; }
 }
 .char-name { font-weight: 800; font-size: 0.9rem; }
 
+.btn-switch-map {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid #ddd;
+  background: white;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+  margin-left: 4px;
+}
+.btn-switch-map:hover { border-color: var(--purple); background: #f0e6ff; }
+
 .map-container {
   padding: 20px;
   padding-bottom: 100px;
@@ -679,6 +695,38 @@ h1, h2, h3 { font-family: 'Fredoka One', cursive; }
   font-weight: 700;
 }
 .btn-back:hover { color: #666; }
+
+.btn-switch-player {
+  display: block;
+  margin: 8px auto 0;
+  padding: 8px 20px;
+  border: 2px solid #e0e0e0;
+  background: white;
+  color: #666;
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.9rem;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.btn-switch-player:hover { border-color: var(--purple); color: var(--purple); }
+
+.btn-switch-inline {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid #eee;
+  background: white;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  transition: all 0.3s;
+  margin-left: 4px;
+}
+.btn-switch-inline:hover { background: #f0e6ff; color: var(--purple); border-color: var(--purple); }
 
 /* ===== LEVEL PLAY ===== */
 .level-play {

@@ -418,7 +418,7 @@ export default function App() {
 
   // ===== WORLD MAP =====
   if (screen === 'map') {
-    return <WorldMap gameState={gameState} onSelectLevel={handleSelectLevel} onBack={handleMapAction} />;
+    return <WorldMap gameState={gameState} onSelectLevel={handleSelectLevel} onBack={handleMapAction} onSwitchProfile={handleSwitchProfile} />;
   }
 
   // ===== LEVEL PLAY =====
@@ -429,6 +429,7 @@ export default function App() {
         gameState={gameState}
         onComplete={handleLevelComplete}
         onExit={handleExitLevel}
+        onSwitchProfile={handleSwitchProfile}
       />
     );
   }
