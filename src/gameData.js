@@ -282,14 +282,13 @@ function genAddition(min, max) {
         attempts++;
       } while (used.has(key) && attempts < 30);
       used.add(key);
-      const itemA = pick(ALL_ITEMS);
-      const itemB = pick(ALL_ITEMS);
+      const item = pick(ALL_ITEMS);
       questions.push({
         type: 'addition',
         prompt: `${a} + ${b} = ?`,
         a, b, sum,
-        emojiA: itemA.emoji,
-        emojiB: itemB.emoji,
+        emojiA: item.emoji,
+        emojiB: item.emoji,
         answer: sum,
         options: makeOptions(sum, Math.max(0, sum - 3), sum + 3),
         hint: `Start with ${a}, then count up ${b} more!`,
