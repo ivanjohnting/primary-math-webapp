@@ -1870,8 +1870,8 @@ export const PETS = [
   { id: 'dragon', name: 'Dragon', emoji: '🐲', unlockLevel: 32 },
   { id: 'butterfly', name: 'Butterfly', emoji: '🦋', unlockLevel: 37 },
   { id: 'parrot', name: 'Parrot', emoji: '🦜', unlockLevel: 42 },
-  { id: 'star_sprite', name: 'Star Sprite', emoji: '✨', unlockLevel: 47 },
-  { id: 'phoenix', name: 'Royal Phoenix', emoji: '🔥', unlockLevel: 52 },
+  { id: 'snow_leopard', name: 'Snow Leopard', emoji: '🐆', unlockLevel: 47 },
+  { id: 'owl', name: 'Mystic Owl', emoji: '🦉', unlockLevel: 52 },
   // Mythical creatures for bonus IQ levels (require 10/12 to unlock)
   { id: 'griffin', name: 'Golden Griffin', emoji: '🦅', unlockLevel: 101, bonusMinScore: 10 },
   { id: 'kraken', name: 'Crystal Kraken', emoji: '🦑', unlockLevel: 102, bonusMinScore: 10 },

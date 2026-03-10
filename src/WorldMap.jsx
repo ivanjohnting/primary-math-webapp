@@ -6,7 +6,8 @@ export default function WorldMap({ gameState, onSelectLevel, onBack, onSwitchPro
   const mapRef = useRef(null);
   const { completedLevels, character, gems, activePet } = gameState;
 
-  const highestCompleted = Math.max(0, ...Object.keys(completedLevels).map(Number));
+  // Only count regular levels (not bonus IDs 100+) for progression
+  const highestCompleted = Math.max(0, ...Object.keys(completedLevels).map(Number).filter(id => id <= 52));
   const currentLevel = Math.min(highestCompleted + 1, 52);
 
   const unlockedPets = PETS.filter(p => {
