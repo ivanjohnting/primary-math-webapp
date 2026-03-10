@@ -2,6 +2,29 @@ import React, { useRef, useEffect } from 'react';
 import { LEVELS, ZONES, PETS } from './gameData';
 import Character from './Character';
 
+const ZONE_DECORATIONS = {
+  1: { // Number Forest
+    className: 'zone-forest',
+    scenery: ['🌲','🌳','🍄','🌿','🦊','🐿️','🍃','🌻','🦋','🐛','🪵','🌾'],
+    ground: '🍂',
+  },
+  2: { // Shape Beach
+    className: 'zone-beach',
+    scenery: ['🌴','🐚','🦀','🏄','🐠','⛱️','🌊','🐬','🪸','🦩','🍉','⭐'],
+    ground: '🏖️',
+  },
+  3: { // Measure Mountains
+    className: 'zone-mountains',
+    scenery: ['🏔️','⛰️','🦅','🌲','🐐','🏕️','🪨','❄️','🌨️','🦌','🐻','🌿'],
+    ground: '⛰️',
+  },
+  4: { // Math Kingdom
+    className: 'zone-kingdom',
+    scenery: ['🏰','🗡️','👑','🛡️','🏳️','🎪','🌹','⚔️','🦁','📜','💎','🔔'],
+    ground: '🏰',
+  },
+};
+
 export default function WorldMap({ gameState, onSelectLevel, onBack, onSwitchProfile }) {
   const mapRef = useRef(null);
   const { completedLevels, character, gems, activePet } = gameState;
@@ -61,8 +84,16 @@ export default function WorldMap({ gameState, onSelectLevel, onBack, onSwitchPro
         {ZONES.map((zone) => {
           const zoneLevels = LEVELS.filter(l => l.zone === zone.id && !l.bonus);
           const bonusLevel = LEVELS.find(l => l.zone === zone.id && l.bonus);
+          const deco = ZONE_DECORATIONS[zone.id];
           return (
-            <div key={zone.id} className="zone-section" style={{ '--zone-color': zone.color, '--zone-bg': zone.bg }}>
+            <div key={zone.id} className={`zone-section ${deco.className}`} style={{ '--zone-color': zone.color, '--zone-bg': zone.bg }}>
+              {/* Floating terrain decorations */}
+              <div className="zone-terrain">
+                {deco.scenery.map((emoji, i) => (
+                  <span key={i} className={`terrain-item terrain-pos-${i}`}>{emoji}</span>
+                ))}
+              </div>
+
               <div className="zone-banner">
                 <span className="zone-icon">{zone.icon}</span>
                 <div>
@@ -70,6 +101,9 @@ export default function WorldMap({ gameState, onSelectLevel, onBack, onSwitchPro
                   <p className="zone-desc">{zone.description}</p>
                 </div>
               </div>
+
+              {/* Winding path decoration */}
+              <div className="zone-path"></div>
 
               <div className="zone-levels">
                 {zoneLevels.map((level, idx) => {
