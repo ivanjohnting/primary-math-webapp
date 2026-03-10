@@ -1351,11 +1351,13 @@ function genIQNumbers() {
         const type = pick(['even', 'odd', 'mult3']);
         let nums, oddOne;
         if (type === 'even') {
-          nums = [rand(1, 10) * 2, rand(1, 10) * 2, rand(1, 10) * 2];
+          const pool = shuffle([2, 4, 6, 8, 10, 12, 14, 16, 18, 20]);
+          nums = pool.slice(0, 3);
           oddOne = rand(1, 10) * 2 + 1;
           while (nums.includes(oddOne)) oddOne = rand(1, 10) * 2 + 1;
         } else if (type === 'odd') {
-          nums = [rand(1, 10) * 2 + 1, rand(1, 10) * 2 + 1, rand(1, 10) * 2 + 1];
+          const pool = shuffle([1, 3, 5, 7, 9, 11, 13, 15, 17, 19]);
+          nums = pool.slice(0, 3);
           oddOne = rand(1, 10) * 2;
           while (nums.includes(oddOne)) oddOne = rand(1, 10) * 2;
         } else {
@@ -1640,7 +1642,7 @@ function genIQLogic() {
         const [a, b, c, d] = shuffle(names).slice(0, 4);
         return {
           type: 'multipleChoice',
-          prompt: `${a} is sitting between ${b} and ${c}. ${d} is next to ${b} (not next to ${a}). Who is at the end?`,
+          prompt: `${a} is sitting between ${b} and ${c}. ${d} is next to ${b} (not next to ${a}). Who is at the end, next to ${b}?`,
           answer: d,
           options: shuffle([a, b, c, d]),
           hint: `Draw it out: ${d} — ${b} — ${a} — ${c}`,
