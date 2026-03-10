@@ -444,43 +444,6 @@ h1, h2, h3 { font-family: 'Fredoka One', cursive; }
   border-color: #BF360C;
 }
 
-/* ---- Floating terrain decorations ---- */
-.zone-terrain {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  pointer-events: none;
-  z-index: 0;
-  overflow: hidden;
-}
-.terrain-item {
-  position: absolute;
-  font-size: 1.4rem;
-  opacity: 0.55;
-  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2));
-  animation: terrain-sway 4s ease-in-out infinite;
-}
-.terrain-pos-0 { top: 8%; left: 3%; font-size: 1.8rem; animation-delay: 0s; }
-.terrain-pos-1 { top: 15%; right: 5%; font-size: 1.6rem; animation-delay: 0.5s; }
-.terrain-pos-2 { top: 35%; left: 2%; animation-delay: 1s; }
-.terrain-pos-3 { top: 50%; right: 3%; font-size: 1.2rem; animation-delay: 1.5s; }
-.terrain-pos-4 { top: 70%; left: 5%; animation-delay: 2s; }
-.terrain-pos-5 { top: 85%; right: 7%; font-size: 1.6rem; animation-delay: 2.5s; }
-.terrain-pos-6 { top: 25%; left: 88%; animation-delay: 0.3s; }
-.terrain-pos-7 { top: 60%; left: 92%; font-size: 1.1rem; animation-delay: 1.2s; }
-.terrain-pos-8 { top: 42%; right: 90%; font-size: 1.3rem; animation-delay: 0.8s; }
-.terrain-pos-9 { top: 78%; left: 90%; animation-delay: 1.8s; }
-.terrain-pos-10 { top: 92%; left: 15%; font-size: 1.1rem; animation-delay: 3s; }
-.terrain-pos-11 { top: 5%; left: 50%; font-size: 1.3rem; animation-delay: 0.7s; }
-
-@keyframes terrain-sway {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  25% { transform: translateY(-3px) rotate(2deg); }
-  75% { transform: translateY(2px) rotate(-1deg); }
-}
-
 /* ---- Winding path ---- */
 .zone-path {
   position: absolute;

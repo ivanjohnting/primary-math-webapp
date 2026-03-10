@@ -3,26 +3,10 @@ import { LEVELS, ZONES, PETS } from './gameData';
 import Character from './Character';
 
 const ZONE_DECORATIONS = {
-  1: { // Number Forest
-    className: 'zone-forest',
-    scenery: ['🌲','🌳','🍄','🌿','🦊','🐿️','🍃','🌻','🦋','🐛','🪵','🌾'],
-    ground: '🍂',
-  },
-  2: { // Shape Beach
-    className: 'zone-beach',
-    scenery: ['🌴','🐚','🦀','🏄','🐠','⛱️','🌊','🐬','🪸','🦩','🍉','⭐'],
-    ground: '🏖️',
-  },
-  3: { // Measure Mountains
-    className: 'zone-mountains',
-    scenery: ['🏔️','⛰️','🦅','🌲','🐐','🏕️','🪨','❄️','🌨️','🦌','🐻','🌿'],
-    ground: '⛰️',
-  },
-  4: { // Math Kingdom
-    className: 'zone-kingdom',
-    scenery: ['🏰','🗡️','👑','🛡️','🏳️','🎪','🌹','⚔️','🦁','📜','💎','🔔'],
-    ground: '🏰',
-  },
+  1: { className: 'zone-forest' },
+  2: { className: 'zone-beach' },
+  3: { className: 'zone-mountains' },
+  4: { className: 'zone-kingdom' },
 };
 
 export default function WorldMap({ gameState, onSelectLevel, onBack, onSwitchProfile }) {
@@ -87,13 +71,6 @@ export default function WorldMap({ gameState, onSelectLevel, onBack, onSwitchPro
           const deco = ZONE_DECORATIONS[zone.id];
           return (
             <div key={zone.id} className={`zone-section ${deco.className}`} style={{ '--zone-color': zone.color, '--zone-bg': zone.bg }}>
-              {/* Floating terrain decorations */}
-              <div className="zone-terrain">
-                {deco.scenery.map((emoji, i) => (
-                  <span key={i} className={`terrain-item terrain-pos-${i}`}>{emoji}</span>
-                ))}
-              </div>
-
               <div className="zone-banner">
                 <span className="zone-icon">{zone.icon}</span>
                 <div>
@@ -101,9 +78,6 @@ export default function WorldMap({ gameState, onSelectLevel, onBack, onSwitchPro
                   <p className="zone-desc">{zone.description}</p>
                 </div>
               </div>
-
-              {/* Winding path decoration */}
-              <div className="zone-path"></div>
 
               <div className="zone-levels">
                 {zoneLevels.map((level, idx) => {
