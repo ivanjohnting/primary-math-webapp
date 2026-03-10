@@ -107,6 +107,8 @@ export default function LevelPlay({ levelId, gameState, onComplete, onExit, onSw
   const [gemsEarned, setGemsEarned] = useState(0);
   const [streakCount, setStreakCount] = useState(0);
   const [showStreakBonus, setShowStreakBonus] = useState(false);
+  const [answerHistory, setAnswerHistory] = useState([]); // { selected, isCorrect } per question
+  const [reviewIndex, setReviewIndex] = useState(null); // null = live question, number = reviewing
   const timeoutRef = useRef(null);
 
   useEffect(() => {
@@ -133,6 +135,11 @@ export default function LevelPlay({ levelId, gameState, onComplete, onExit, onSw
     }
 
     setIsCorrect(correct);
+    setAnswerHistory(prev => {
+      const updated = [...prev];
+      updated[currentQ] = { selected: answer, isCorrect: correct };
+      return updated;
+    });
 
     if (correct) {
       const newStreak = streakCount + 1;
@@ -279,6 +286,34 @@ export default function LevelPlay({ levelId, gameState, onComplete, onExit, onSw
   // ===== PLAYING PHASE =====
   if (!question) return null;
 
+  const isReviewing = reviewIndex !== null;
+  const displayQ = isReviewing ? questions[reviewIndex] : question;
+  const displayIndex = isReviewing ? reviewIndex : currentQ;
+  const reviewData = isReviewing ? answerHistory[reviewIndex] : null;
+  // In review mode, always show result state
+  const displayShowResult = isReviewing ? true : showResult;
+  const displaySelected = isReviewing ? reviewData?.selected : selected;
+  const displayIsCorrect = isReviewing ? reviewData?.isCorrect : isCorrect;
+
+  const canGoPrev = isReviewing ? reviewIndex > 0 : currentQ > 0;
+  const canGoNext = isReviewing && reviewIndex < currentQ;
+
+  const goToPrev = () => {
+    if (isReviewing) {
+      if (reviewIndex > 0) setReviewIndex(reviewIndex - 1);
+    } else if (currentQ > 0) {
+      setReviewIndex(currentQ - 1);
+    }
+  };
+  const goToNext = () => {
+    if (isReviewing && reviewIndex < currentQ - 1) {
+      setReviewIndex(reviewIndex + 1);
+    } else {
+      setReviewIndex(null);
+    }
+  };
+  const backToCurrent = () => setReviewIndex(null);
+
   return (
     <div className="screen level-play" style={{ '--zone-color': zone.color }}>
       {/* Header */}
@@ -289,84 +324,115 @@ export default function LevelPlay({ levelId, gameState, onComplete, onExit, onSw
         )}
         <div className="progress-bar-container">
           <div className="progress-bar" style={{ width: `${progress}%` }} />
-          <span className="progress-text">{currentQ + 1} / {questions.length}</span>
+          <span className="progress-text">{displayIndex + 1} / {questions.length}</span>
         </div>
         <div className="play-gems">💎 {gemsEarned}</div>
       </div>
 
+      {/* Review navigation */}
+      {(canGoPrev || isReviewing) && (
+        <div className="review-nav">
+          <button className="btn-review-prev" onClick={goToPrev} disabled={!canGoPrev}>
+            ◀ Previous
+          </button>
+          {isReviewing && (
+            <>
+              {canGoNext && (
+                <button className="btn-review-next" onClick={goToNext}>
+                  Next ▶
+                </button>
+              )}
+              <button className="btn-review-back" onClick={backToCurrent}>
+                Back to Question {currentQ + 1} →
+              </button>
+            </>
+          )}
+          {!isReviewing && (
+            <span className="review-nav-hint">Review previous questions</span>
+          )}
+        </div>
+      )}
+
+      {/* Review mode banner */}
+      {isReviewing && (
+        <div className="review-banner">
+          📖 Reviewing Question {reviewIndex + 1} — {reviewData?.isCorrect ? '✅ You got this right!' : '❌ You got this wrong'}
+        </div>
+      )}
+
       {/* Streak Bonus */}
-      {showStreakBonus && (
+      {!isReviewing && showStreakBonus && (
         <div className="streak-bonus">🔥 {streakCount} Streak! Bonus Gems!</div>
       )}
 
       {/* Question Area */}
-      <div className="question-area">
+      <div className={`question-area ${isReviewing ? 'reviewing' : ''}`}>
         {/* Character companion */}
         <div className="play-companion">
-          <Character config={gameState.character} size={50} mood={showResult ? (isCorrect ? 'happy' : 'sad') : 'happy'} />
+          <Character config={gameState.character} size={50} mood={displayShowResult ? (displayIsCorrect ? 'happy' : 'sad') : 'happy'} />
           {gameState.activePet && (
             <span className="companion-pet">{PETS.find(p => p.id === gameState.activePet)?.emoji}</span>
           )}
         </div>
 
         {/* Prompt */}
-        <div className="question-prompt">{question.prompt}</div>
+        <div className="question-prompt">{displayQ.prompt}</div>
 
         {/* Visual content based on question type */}
         <div className="question-visual">
           {/* COUNT OBJECTS */}
-          {question.type === 'countObjects' && (
+          {displayQ.type === 'countObjects' && (
             <div className="emoji-grid">
-              {[...Array(question.count)].map((_, i) => (
+              {[...Array(displayQ.count)].map((_, i) => (
                 <span key={i} className="emoji-item" style={{ animationDelay: `${i * 0.1}s` }}>
-                  {question.emoji}
+                  {displayQ.emoji}
                 </span>
               ))}
             </div>
           )}
 
           {/* COMPARE */}
-          {question.type === 'compare' && (
+          {displayQ.type === 'compare' && (
             <div className="compare-visual">
               <div className="compare-group">
-                <div className="compare-label">{question.leftLabel || 'Left'}</div>
+                <div className="compare-label">{displayQ.leftLabel || 'Left'}</div>
                 <div className="emoji-group">
-                  {question.emoji && [...Array(question.leftCount)].map((_, i) => (
-                    <span key={i} className="emoji-item small">{question.emoji}</span>
+                  {displayQ.emoji && [...Array(displayQ.leftCount)].map((_, i) => (
+                    <span key={i} className="emoji-item small">{displayQ.emoji}</span>
                   ))}
-                  {!question.emoji && <span className="compare-number">{question.leftCount}</span>}
+                  {!displayQ.emoji && <span className="compare-number">{displayQ.leftCount}</span>}
                 </div>
               </div>
               <div className="compare-vs">VS</div>
               <div className="compare-group">
-                <div className="compare-label">{question.rightLabel || 'Right'}</div>
+                <div className="compare-label">{displayQ.rightLabel || 'Right'}</div>
                 <div className="emoji-group">
-                  {question.emoji && [...Array(question.rightCount)].map((_, i) => (
-                    <span key={i} className="emoji-item small">{question.emoji}</span>
+                  {displayQ.emoji && [...Array(displayQ.rightCount)].map((_, i) => (
+                    <span key={i} className="emoji-item small">{displayQ.emoji}</span>
                   ))}
-                  {!question.emoji && <span className="compare-number">{question.rightCount}</span>}
+                  {!displayQ.emoji && <span className="compare-number">{displayQ.rightCount}</span>}
                 </div>
               </div>
             </div>
           )}
 
           {/* NUMBER BONDS */}
-          {question.type === 'numberBonds' && (
-            <NumberBondDiagram total={question.total} left={question.left} right={question.right} />
+          {displayQ.type === 'numberBonds' && (
+            <NumberBondDiagram total={displayQ.total} left={displayQ.left} right={displayQ.right} />
           )}
 
           {/* ADDITION */}
-          {question.type === 'addition' && (
+          {displayQ.type === 'addition' && (
             <div className="addition-visual">
               <div className="add-group">
-                {[...Array(question.a)].map((_, i) => (
-                  <span key={i} className="emoji-item small">{question.emojiA}</span>
+                {[...Array(displayQ.a)].map((_, i) => (
+                  <span key={i} className="emoji-item small">{displayQ.emojiA}</span>
                 ))}
               </div>
               <span className="operator">+</span>
               <div className="add-group">
-                {[...Array(question.b)].map((_, i) => (
-                  <span key={i} className="emoji-item small">{question.emojiB}</span>
+                {[...Array(displayQ.b)].map((_, i) => (
+                  <span key={i} className="emoji-item small">{displayQ.emojiB}</span>
                 ))}
               </div>
               <span className="operator">=</span>
@@ -375,26 +441,26 @@ export default function LevelPlay({ levelId, gameState, onComplete, onExit, onSw
           )}
 
           {/* SUBTRACTION */}
-          {question.type === 'subtraction' && (
+          {displayQ.type === 'subtraction' && (
             <div className="subtraction-visual">
               <div className="sub-group">
-                {[...Array(question.a)].map((_, i) => (
-                  <span key={`${i}`} className={`emoji-item small ${i >= question.diff ? 'fading' : ''}`}>
-                    {question.emoji}
+                {[...Array(displayQ.a)].map((_, i) => (
+                  <span key={`${i}`} className={`emoji-item small ${i >= displayQ.diff ? 'fading' : ''}`}>
+                    {displayQ.emoji}
                   </span>
                 ))}
               </div>
-              <div className="sub-expression">{question.a} − {question.b} = ?</div>
+              <div className="sub-expression">{displayQ.a} − {displayQ.b} = ?</div>
             </div>
           )}
 
           {/* MULTIPLICATION */}
-          {question.type === 'multiplication' && (
+          {displayQ.type === 'multiplication' && (
             <div className="multiplication-visual">
-              {[...Array(question.groups)].map((_, g) => (
+              {[...Array(displayQ.groups)].map((_, g) => (
                 <div key={g} className="mult-group">
-                  {[...Array(question.perGroup)].map((_, i) => (
-                    <span key={i} className="emoji-item small">{question.emoji}</span>
+                  {[...Array(displayQ.perGroup)].map((_, i) => (
+                    <span key={i} className="emoji-item small">{displayQ.emoji}</span>
                   ))}
                 </div>
               ))}
@@ -402,16 +468,16 @@ export default function LevelPlay({ levelId, gameState, onComplete, onExit, onSw
           )}
 
           {/* DIVISION */}
-          {question.type === 'division' && (
+          {displayQ.type === 'division' && (
             <div className="division-visual">
               <div className="div-total">
-                {[...Array(question.total)].map((_, i) => (
-                  <span key={i} className="emoji-item small">{question.emoji}</span>
+                {[...Array(displayQ.total)].map((_, i) => (
+                  <span key={i} className="emoji-item small">{displayQ.emoji}</span>
                 ))}
               </div>
-              <div className="div-arrow">↓ Share among {question.divisor}</div>
+              <div className="div-arrow">↓ Share among {displayQ.divisor}</div>
               <div className="div-groups">
-                {[...Array(question.divisor)].map((_, g) => (
+                {[...Array(displayQ.divisor)].map((_, g) => (
                   <div key={g} className="div-group-box">👤</div>
                 ))}
               </div>
@@ -419,20 +485,21 @@ export default function LevelPlay({ levelId, gameState, onComplete, onExit, onSw
           )}
 
           {/* CLOCK */}
-          {question.type === 'clock' && (
+          {displayQ.type === 'clock' && (
             <div className="clock-visual">
-              <ClockFace hour={question.hour} minute={question.minute} />
+              <ClockFace hour={displayQ.hour} minute={displayQ.minute} />
             </div>
           )}
 
           {/* SHAPE IDENTIFY */}
-          {question.type === 'shapeIdentify' && (
+          {displayQ.type === 'shapeIdentify' && (
             <div className="shapes-grid">
-              {question.shapes.map((shape, i) => (
+              {displayQ.shapes.map((shape, i) => (
                 <button
                   key={i}
-                  className={`shape-option ${selected === shape ? (showResult ? (isCorrect ? 'correct' : 'wrong') : 'selected') : ''} ${showResult && shape === question.answer ? 'correct' : ''}`}
-                  onClick={() => !showResult && checkAnswer(shape)}
+                  className={`shape-option ${displaySelected === shape ? (displayShowResult ? (displayIsCorrect ? 'correct' : 'wrong') : 'selected') : ''} ${displayShowResult && shape === displayQ.answer ? 'correct' : ''}`}
+                  onClick={() => !displayShowResult && !isReviewing && checkAnswer(shape)}
+                  disabled={isReviewing}
                 >
                   <ShapeDisplay shape={shape} size={80} />
                   <span className="shape-name">{shape}</span>
@@ -442,10 +509,10 @@ export default function LevelPlay({ levelId, gameState, onComplete, onExit, onSw
           )}
 
           {/* SHAPE PATTERN */}
-          {question.type === 'shapePattern' && (
+          {displayQ.type === 'shapePattern' && (
             <div className="pattern-visual">
               <div className="pattern-row">
-                {question.pattern.map((s, i) => (
+                {displayQ.pattern.map((s, i) => (
                   <div key={i} className={`pattern-item ${s === '?' ? 'blank' : ''}`}>
                     {s === '?' ? '?' : <ShapeDisplay shape={s} size={50} />}
                   </div>
@@ -455,36 +522,46 @@ export default function LevelPlay({ levelId, gameState, onComplete, onExit, onSw
           )}
 
           {/* ORDERING */}
-          {question.type === 'ordering' && (
+          {displayQ.type === 'ordering' && (
             <div className="ordering-visual">
               <div className="order-selected">
-                {orderSelection.map((n, i) => (
-                  <span key={i} className="order-placed">{n}</span>
-                ))}
-                {[...Array(question.numbers.length - orderSelection.length)].map((_, i) => (
-                  <span key={`blank-${i}`} className="order-blank">_</span>
-                ))}
+                {isReviewing ? (
+                  (reviewData?.selected || []).map((n, i) => (
+                    <span key={i} className="order-placed">{n}</span>
+                  ))
+                ) : (
+                  <>
+                    {orderSelection.map((n, i) => (
+                      <span key={i} className="order-placed">{n}</span>
+                    ))}
+                    {[...Array(displayQ.numbers.length - orderSelection.length)].map((_, i) => (
+                      <span key={`blank-${i}`} className="order-blank">_</span>
+                    ))}
+                  </>
+                )}
               </div>
-              <div className="order-choices">
-                {question.numbers.map((n, i) => (
-                  <button
-                    key={i}
-                    className={`order-btn ${orderSelection.includes(n) ? 'used' : ''}`}
-                    onClick={() => handleOrderClick(n)}
-                    disabled={orderSelection.includes(n) || showResult}
-                  >
-                    {n}
-                  </button>
-                ))}
-              </div>
+              {!isReviewing && (
+                <div className="order-choices">
+                  {displayQ.numbers.map((n, i) => (
+                    <button
+                      key={i}
+                      className={`order-btn ${orderSelection.includes(n) ? 'used' : ''}`}
+                      onClick={() => handleOrderClick(n)}
+                      disabled={orderSelection.includes(n) || showResult}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
           {/* ORDINAL */}
-          {question.type === 'ordinal' && (
+          {displayQ.type === 'ordinal' && (
             <div className="ordinal-visual">
               <div className="ordinal-line">
-                {question.items.map((item, i) => (
+                {displayQ.items.map((item, i) => (
                   <div key={i} className="ordinal-item">
                     <span className="ordinal-emoji">{item}</span>
                     <span className="ordinal-pos">{i + 1}</span>
@@ -495,10 +572,10 @@ export default function LevelPlay({ levelId, gameState, onComplete, onExit, onSw
           )}
 
           {/* PATTERN (number) */}
-          {question.type === 'pattern' && (
+          {displayQ.type === 'pattern' && (
             <div className="number-pattern-visual">
               <div className="pattern-numbers">
-                {question.sequence.map((n, i) => (
+                {displayQ.sequence.map((n, i) => (
                   <span key={i} className={`pattern-num ${n === '?' ? 'blank' : ''}`}>
                     {n}
                   </span>
@@ -508,37 +585,37 @@ export default function LevelPlay({ levelId, gameState, onComplete, onExit, onSw
           )}
 
           {/* PICTURE GRAPH */}
-          {question.type === 'pictureGraph' && (
-            <PictureGraph data={question.graphData} />
+          {displayQ.type === 'pictureGraph' && (
+            <PictureGraph data={displayQ.graphData} />
           )}
 
           {/* WORD PROBLEM */}
-          {question.type === 'wordProblem' && question.emoji && (
+          {displayQ.type === 'wordProblem' && displayQ.emoji && (
             <div className="word-problem-visual">
-              <span className="wp-emoji">{question.emoji}</span>
+              <span className="wp-emoji">{displayQ.emoji}</span>
             </div>
           )}
         </div>
 
         {/* Answer options (for most question types) */}
-        {!['shapeIdentify', 'ordering'].includes(question.type) && (
+        {!['shapeIdentify', 'ordering'].includes(displayQ.type) && (
           <div className="answer-options">
-            {(question.options || []).map((opt, i) => {
-              const isSelected = selected === opt;
-              const isAnswer = opt === question.answer;
+            {(displayQ.options || []).map((opt, i) => {
+              const optIsSelected = displaySelected === opt;
+              const isAnswer = opt === displayQ.answer;
               let className = 'option-button';
-              if (showResult) {
+              if (displayShowResult) {
                 if (isAnswer) className += ' correct';
-                else if (isSelected) className += ' wrong';
-              } else if (isSelected) {
+                else if (optIsSelected) className += ' wrong';
+              } else if (optIsSelected) {
                 className += ' selected';
               }
               return (
                 <button
                   key={i}
                   className={className}
-                  onClick={() => !showResult && checkAnswer(opt)}
-                  disabled={showResult}
+                  onClick={() => !displayShowResult && !isReviewing && checkAnswer(opt)}
+                  disabled={displayShowResult || isReviewing}
                 >
                   {typeof opt === 'string' && SHAPE_EMOJI[opt] ? (
                     <><ShapeDisplay shape={opt} size={30} /> {opt}</>
@@ -552,34 +629,37 @@ export default function LevelPlay({ levelId, gameState, onComplete, onExit, onSw
         )}
 
         {/* Ordering result feedback */}
-        {question.type === 'ordering' && showResult && (
-          <div className={`order-result ${isCorrect ? 'correct' : 'wrong'}`}>
-            {isCorrect ? '✅ Correct!' : `❌ The right order is: ${question.answer.join(', ')}`}
+        {displayQ.type === 'ordering' && displayShowResult && (
+          <div className={`order-result ${displayIsCorrect ? 'correct' : 'wrong'}`}>
+            {displayIsCorrect ? '✅ Correct!' : `❌ The right order is: ${displayQ.answer.join(', ')}`}
           </div>
         )}
 
         {/* Hint button */}
-        {!showResult && !showHint && (
+        {!isReviewing && !showResult && !showHint && (
           <button className="hint-btn" onClick={() => setShowHint(true)}>
             💡 Need a hint?
           </button>
         )}
-        {showHint && !showResult && (
-          <div className="hint-bubble">💡 {question.hint}</div>
+        {!isReviewing && showHint && !showResult && (
+          <div className="hint-bubble">💡 {displayQ.hint}</div>
         )}
 
         {/* Result feedback */}
-        {showResult && (
-          <div className={`result-feedback ${isCorrect ? 'correct' : 'wrong'}`}>
-            {isCorrect ? (
+        {displayShowResult && (
+          <div className={`result-feedback ${displayIsCorrect ? 'correct' : 'wrong'}`}>
+            {displayIsCorrect ? (
               <span className="result-text">
-                {['Awesome! 🎉', 'Amazing! ✨', 'You got it! 🌟', 'Brilliant! 💫', 'Super! 🎊'][Math.floor(Math.random() * 5)]}
-                <span className="gem-earn">+💎</span>
+                {isReviewing ? '✅ You answered correctly!' : ['Awesome! 🎉', 'Amazing! ✨', 'You got it! 🌟', 'Brilliant! 💫', 'Super! 🎊'][Math.floor(Math.random() * 5)]}
+                {!isReviewing && <span className="gem-earn">+💎</span>}
               </span>
             ) : (
               <span className="result-text">
-                Not quite! The answer is <strong>{String(question.answer)}</strong>
-                <br /><small>{question.hint}</small>
+                {isReviewing ? 'Your answer: ' : 'Not quite! The answer is '}<strong>{String(displayQ.answer)}</strong>
+                {isReviewing && displaySelected !== displayQ.answer && (
+                  <><br /><small>You chose: {String(displaySelected)}</small></>
+                )}
+                {!isReviewing && <><br /><small>{displayQ.hint}</small></>}
               </span>
             )}
           </div>
