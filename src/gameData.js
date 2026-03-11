@@ -434,20 +434,62 @@ function genFactFamilies(max) {
 }
 
 function genShapes2D(shapes) {
+  const shapeProps = {
+    circle: { sides: 0, corners: 0, round: true },
+    triangle: { sides: 3, corners: 3, round: false },
+    square: { sides: 4, corners: 4, round: false },
+    rectangle: { sides: 4, corners: 4, round: false },
+  };
+  // True/false facts: [statement, isTrue, hint]
+  function shapeFacts(shape) {
+    const p = shapeProps[shape];
+    const facts = [
+      [`A ${shape} has ${p.sides} sides.`, true, `Count the straight edges!`],
+      [`A ${shape} has ${p.corners} corners.`, true, `Corners are where sides meet!`],
+    ];
+    // Add false statements
+    if (p.sides > 0) {
+      const wrongSides = p.sides === 4 ? 3 : 4;
+      facts.push([`A ${shape} has ${wrongSides} sides.`, false, `Count the straight edges carefully!`]);
+    }
+    if (p.corners > 0) {
+      const wrongCorners = p.corners === 4 ? 5 : 4;
+      facts.push([`A ${shape} has ${wrongCorners} corners.`, false, `Count the corners carefully!`]);
+    }
+    if (shape === 'circle') {
+      facts.push([`A circle has corners.`, false, `A circle is round with no corners!`]);
+      facts.push([`A circle is round.`, true, `A circle has no straight edges!`]);
+    }
+    if (shape === 'square') {
+      facts.push([`A square has 4 equal sides.`, true, `All sides of a square are the same length!`]);
+      facts.push([`A square is round.`, false, `A square has straight sides and corners!`]);
+    }
+    if (shape === 'rectangle') {
+      facts.push([`A rectangle has 4 sides.`, true, `A rectangle has 2 long sides and 2 short sides!`]);
+      facts.push([`A rectangle is round.`, false, `A rectangle has straight sides and corners!`]);
+    }
+    if (shape === 'triangle') {
+      facts.push([`A triangle has 4 sides.`, false, `A triangle has exactly 3 sides!`]);
+      facts.push([`A triangle has 3 corners.`, true, `Each point of a triangle is a corner!`]);
+    }
+    return facts;
+  }
   return () => {
     const questions = [];
     const used = new Set();
     for (let i = 0; i < 12; i++) {
       let target, key;
       let attempts = 0;
+      const qType = i % 4;
       do {
         target = pick(shapes);
-        key = `${i % 3}-${target}`;
+        key = `${qType}-${target}-${attempts}`;
         attempts++;
       } while (used.has(key) && attempts < 30);
       used.add(key);
       const others = shuffle(SHAPES_2D.filter(s => s !== target)).slice(0, 3);
-      if (i % 3 === 0) {
+      if (qType === 0) {
+        // Shape identification
         questions.push({
           type: 'shapeIdentify',
           prompt: `Which shape is a ${target}?`,
@@ -459,9 +501,10 @@ function genShapes2D(shapes) {
             : target === 'square' ? 'A square has 4 equal sides!'
             : 'A rectangle has 2 long sides and 2 short sides!',
         });
-      } else if (i % 3 === 1) {
+      } else if (qType === 1) {
+        // How many sides
         const shape = pick(shapes);
-        const sides = { circle: 0, triangle: 3, square: 4, rectangle: 4 }[shape];
+        const sides = shapeProps[shape].sides;
         questions.push({
           type: 'multipleChoice',
           prompt: `How many sides does a ${shape} have?`,
@@ -469,15 +512,28 @@ function genShapes2D(shapes) {
           options: shuffle([0, 3, 4, 5].includes(sides) ? [0, 3, 4, 5] : makeOptions(sides, 0, 6)),
           hint: `Count the straight edges of the shape!`,
         });
-      } else {
+      } else if (qType === 2) {
+        // How many corners
         const shape = pick(shapes);
-        const corners = { circle: 0, triangle: 3, square: 4, rectangle: 4 }[shape];
+        const corners = shapeProps[shape].corners;
         questions.push({
           type: 'multipleChoice',
           prompt: `How many corners does a ${shape} have?`,
           answer: corners,
           options: shuffle([0, 3, 4, 5].includes(corners) ? [0, 3, 4, 5] : makeOptions(corners, 0, 6)),
           hint: `Corners are the pointy parts where sides meet!`,
+        });
+      } else {
+        // True or false
+        const shape = pick(shapes);
+        const facts = shapeFacts(shape);
+        const [statement, isTrue, hint] = pick(facts);
+        questions.push({
+          type: 'multipleChoice',
+          prompt: `True or false: ${statement}`,
+          answer: isTrue ? 'True' : 'False',
+          options: ['True', 'False'],
+          hint,
         });
       }
     }
