@@ -690,36 +690,24 @@ function genShapes3D() {
       { name: 'cone', desc: '1 flat circle and 1 pointy top', emoji: '🍦' },
     ];
     const questions = [];
-    const used = new Set();
-    for (let i = 0; i < 12; i++) {
-      let shape, key;
-      let attempts = 0;
-      do {
-        shape = pick(shapes3D);
-        key = `${i % 2}-${shape.name}`;
-        attempts++;
-      } while (used.has(key) && attempts < 30);
-      used.add(key);
+    for (const shape of shapes3D) {
       const others = shuffle(shapes3D.filter(s => s.name !== shape.name)).slice(0, 3);
-      if (i % 2 === 0) {
-        questions.push({
-          type: 'multipleChoice',
-          prompt: `Which 3D shape is ${shape.desc}?`,
-          answer: shape.name,
-          options: shuffle([shape, ...others].map(s => s.name)),
-          hint: `Think about what ${shape.emoji} looks like!`,
-        });
-      } else {
-        questions.push({
-          type: 'multipleChoice',
-          prompt: `What 3D shape does ${shape.emoji} look like?`,
-          answer: shape.name,
-          options: shuffle([shape, ...others].map(s => s.name)),
-          hint: shape.desc,
-        });
-      }
+      questions.push({
+        type: 'multipleChoice',
+        prompt: `Which 3D shape is ${shape.desc}?`,
+        answer: shape.name,
+        options: shuffle([shape, ...others].map(s => s.name)),
+        hint: `Think about what ${shape.emoji} looks like!`,
+      });
+      questions.push({
+        type: 'multipleChoice',
+        prompt: `What 3D shape does ${shape.emoji} look like?`,
+        answer: shape.name,
+        options: shuffle([shape, ...others].map(s => s.name)),
+        hint: shape.desc,
+      });
     }
-    return questions;
+    return shuffle(questions);
   };
 }
 
