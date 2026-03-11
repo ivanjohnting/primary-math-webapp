@@ -685,7 +685,6 @@ function genShapes3D() {
   return () => {
     const shapes3D = [
       { name: 'cube', desc: '6 flat faces, all squares', emoji: '📦' },
-      { name: 'cuboid', desc: '6 flat faces, rectangles', emoji: '🧊' },
       { name: 'sphere', desc: 'perfectly round like a ball', emoji: '⚽' },
       { name: 'cylinder', desc: '2 flat circles and 1 curved surface', emoji: '🥫' },
       { name: 'cone', desc: '1 flat circle and 1 pointy top', emoji: '🍦' },
