@@ -508,7 +508,7 @@ h1, h2, h3 { font-family: 'Fredoka One', cursive; }
 .zone-levels {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 22px 15px;
+  gap: 55px 15px;
   padding: 20px 15px;
   position: relative;
   z-index: 1;
