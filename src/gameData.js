@@ -552,17 +552,20 @@ function genShapes2D(shapes) {
           hint: `Think carefully about what a ${s} looks like!`,
         }));
       }
-      const otherShape = pick(shapes.filter(x => x !== s)) || pick(SHAPES_2D.filter(x => x !== s));
-      const otherFacts = SHAPE_FACTS[otherShape] || [];
-      if (otherFacts.length > 0) {
-        const falseFact = pick(otherFacts);
-        questionMakers.push(() => ({
-          type: 'multipleChoice',
-          prompt: `True or false: A ${s} ${falseFact}.`,
-          answer: 'False',
-          options: shuffle(['True', 'False']),
-          hint: `That sounds more like a ${otherShape}!`,
-        }));
+      // Generate false statements by picking facts from other shapes that do NOT also apply to s
+      const ownFacts = new Set(SHAPE_FACTS[s] || []);
+      const allOtherShapes = SHAPES_2D.filter(x => x !== s);
+      for (const otherShape of allOtherShapes) {
+        const otherFacts = (SHAPE_FACTS[otherShape] || []).filter(f => !ownFacts.has(f));
+        for (const falseFact of otherFacts) {
+          questionMakers.push(() => ({
+            type: 'multipleChoice',
+            prompt: `True or false: A ${s} ${falseFact}.`,
+            answer: 'False',
+            options: shuffle(['True', 'False']),
+            hint: `That sounds more like a ${otherShape}!`,
+          }));
+        }
       }
     }
 
