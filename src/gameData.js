@@ -449,7 +449,7 @@ function genShapes2D(shapes) {
       { obj: 'party hat', emoji: '🎉' }, { obj: 'mountain peak', emoji: '⛰️' },
     ],
     square: [
-      { obj: 'window', emoji: '🪟' }, { obj: 'cracker', emoji: '🧇' },
+      { obj: 'cracker', emoji: '🧇' },
       { obj: 'dice face', emoji: '🎲' }, { obj: 'sticky note', emoji: '📝' },
       { obj: 'floor tile', emoji: '🟦' }, { obj: 'chess board square', emoji: '♟️' },
     ],
