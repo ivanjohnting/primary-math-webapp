@@ -462,7 +462,7 @@ function genShapes2D(shapes) {
   const SHAPE_FACTS = {
     circle: ['has no straight sides', 'is perfectly round', 'has no corners', 'can roll'],
     triangle: ['has exactly 3 sides', 'has exactly 3 corners', 'is the shape with the fewest sides', 'has pointy corners'],
-    square: ['has 4 equal sides', 'has 4 corners', 'has 4 sides', 'has all sides the same length'],
+    square: ['has 4 equal sides', 'has 4 corners', 'has 4 sides', 'has all sides the same length', 'has opposite sides that are equal'],
     rectangle: ['has 4 sides', 'has 4 corners', 'has 2 long sides and 2 short sides', 'has opposite sides that are equal'],
   };
 
