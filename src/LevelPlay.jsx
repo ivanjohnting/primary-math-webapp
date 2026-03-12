@@ -502,7 +502,6 @@ export default function LevelPlay({ levelId, gameState, onComplete, onExit, onSw
                   disabled={isReviewing}
                 >
                   <ShapeDisplay shape={shape} size={80} />
-                  <span className="shape-name">{shape}</span>
                 </button>
               ))}
             </div>
