@@ -617,7 +617,13 @@ export default function LevelPlay({ levelId, gameState, onComplete, onExit, onSw
                   disabled={displayShowResult || isReviewing}
                 >
                   {typeof opt === 'string' && SHAPE_EMOJI[opt] ? (
-                    <><ShapeDisplay shape={opt} size={30} /> {opt}</>
+                    <>
+                      {['circle', 'triangle', 'square', 'rectangle'].includes(opt)
+                        ? <ShapeDisplay shape={opt} size={30} />
+                        : <span style={{ fontSize: '1.2em' }}>{SHAPE_EMOJI[opt]}</span>
+                      }
+                      {' '}{opt}
+                    </>
                   ) : (
                     opt
                   )}

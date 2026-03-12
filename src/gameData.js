@@ -34,7 +34,7 @@ const OBJECTS = [
 ];
 const ALL_ITEMS = [...FRUIT, ...ANIMALS, ...OBJECTS];
 const SHAPES_2D = ['circle', 'triangle', 'square', 'rectangle'];
-const SHAPE_EMOJI = { circle: '⬤', triangle: '▲', square: '■', rectangle: '▬' };
+const SHAPE_EMOJI = { circle: '⬤', triangle: '▲', square: '■', rectangle: '▬', pentagon: '⬠', hexagon: '⬡', oval: '⬮', diamond: '◆' };
 const NUMBER_WORDS = ['zero','one','two','three','four','five','six','seven','eight','nine','ten',
   'eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen','twenty'];
 const ORDINAL_WORDS = ['first','second','third','fourth','fifth','sixth','seventh','eighth','ninth','tenth'];
